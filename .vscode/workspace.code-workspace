@@ -1,0 +1,306 @@
+{
+  "folders": [
+    {
+      "name": "EcoLens Root",
+      "path": "."
+    },
+    {
+      "name": "Frontend",
+      "path": "./frontend"
+    },
+    {
+      "name": "Backend",
+      "path": "./backend"
+    },
+    {
+      "name": "Infrastructure",
+      "path": "./infrastructure"
+    },
+    {
+      "name": "Documentation",
+      "path": "./docs"
+    }
+  ],
+  "settings": {
+    "typescript.preferences.includePackageJsonAutoImports": "on",
+    "typescript.suggest.paths": true,
+    "typescript.preferences.importModuleSpecifier": "relative",
+    "typescript.suggest.autoImports": true,
+    "typescript.updateImportsOnFileMove.enabled": "always",
+    "typescript.suggest.completeFunctionCalls": true,
+    "typescript.suggest.includeCompletionsForModuleExports": true,
+    "typescript.suggest.includeCompletionsWithSnippetText": true,
+    "typescript.suggest.includeCompletionsForImportStatements": true,
+
+    "files.associations": {
+      "*.ts": "typescript",
+      "*.tsx": "typescriptreact",
+      "cdk.json": "json",
+      "*.cdk.ts": "typescript",
+      "*.lambda.ts": "typescript",
+      "*.construct.ts": "typescript"
+    },
+
+    "aws.profile": "econlens-admin",
+    "aws.region": "us-east-1",
+    "aws.toolkit.autoRefresh": true,
+    "aws.toolkit.showWelcomeOnStartup": false,
+
+    "editor.formatOnSave": true,
+    "editor.formatOnPaste": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.eslint": "explicit",
+      "source.organizeImports": "explicit"
+    },
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.tabSize": 2,
+    "editor.insertSpaces": true,
+    "editor.detectIndentation": false,
+
+    "[typescript]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
+      "editor.formatOnSave": true
+    },
+    "[typescriptreact]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
+      "editor.formatOnSave": true
+    },
+    "[json]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[jsonc]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[yaml]": {
+      "editor.defaultFormatter": "redhat.vscode-yaml"
+    },
+    "[markdown]": {
+      "editor.defaultFormatter": "yzhang.markdown-all-in-one"
+    },
+
+    "eslint.workingDirectories": ["frontend", "backend", "infrastructure"],
+    "eslint.validate": ["javascript", "javascriptreact", "typescript", "typescriptreact"],
+
+    "prettier.configPath": "./.prettierrc",
+    "prettier.requireConfig": true,
+
+    "explorer.fileNesting.enabled": true,
+    "explorer.fileNesting.patterns": {
+      "package.json": "package-lock.json,yarn.lock,pnpm-lock.yaml",
+      "tsconfig.json": "tsconfig.*.json",
+      "cdk.json": "cdk.context.json",
+      "*.ts": "$(capture).js,$(capture).d.ts,$(capture).js.map",
+      "*.tsx": "$(capture).js,$(capture).d.ts,$(capture).js.map"
+    },
+
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/dist": true,
+      "**/build": true,
+      "**/cdk.out": true,
+      "**/.git": true,
+      "**/coverage": true,
+      "**/.nyc_output": true
+    },
+
+    "files.exclude": {
+      "**/node_modules": true,
+      "**/dist": true,
+      "**/build": true,
+      "**/cdk.out": true,
+      "**/.git": true,
+      "**/coverage": true,
+      "**/.nyc_output": true,
+      "**/*.js.map": true
+    },
+
+    "git.ignoreLimitWarning": true,
+    "git.autofetch": true,
+    "git.enableSmartCommit": true,
+
+    "terminal.integrated.defaultProfile.osx": "zsh",
+    "terminal.integrated.env.osx": {
+      "AWS_PROFILE": "econlens-admin"
+    },
+
+    "security.workspace.trust.untrustedFiles": "prompt",
+
+    "github.copilot.enable": {
+      "*": true,
+      "yaml": false,
+      "plaintext": false,
+      "markdown": true
+    },
+
+    "jest.jestCommandLine": "npm test --",
+    "jest.autoRun": "off",
+    "jest.showCoverageOnLoad": false,
+
+    "docker.showStartPage": false,
+
+    "markdown.preview.breaks": true,
+    "markdown.preview.linkify": true
+  },
+  "extensions": {
+    "recommendations": [
+      "amazonwebservices.aws-toolkit-vscode",
+      "aws-scripting-guy.cform",
+      "ms-vscode.vscode-json",
+      "ms-vscode.vscode-typescript-next",
+      "bradlc.vscode-tailwindcss",
+      "esbenp.prettier-vscode",
+      "ms-vscode.vscode-eslint",
+      "formulahendry.auto-rename-tag",
+      "christian-kohler.path-intellisense",
+      "ms-vscode.vscode-workspace-trust",
+      "ms-vscode.vscode-multi-root-workspaces",
+      "ms-vscode.vscode-npm-scripts",
+      "ms-vscode.vscode-npm",
+      "ms-mssql.mssql",
+      "ms-vscode.vscode-postgresql",
+      "eamodio.gitlens",
+      "github.vscode-pull-request-github",
+      "github.copilot",
+      "github.copilot-chat",
+      "ms-vscode.vscode-ai",
+      "ms-vscode.vscode-github-actions",
+      "ms-vscode.vscode-docker",
+      "ms-vscode.vscode-jest",
+      "ms-vscode.vscode-mocha-test-adapter",
+      "hbenl.vscode-test-explorer",
+      "ms-vscode.vscode-thunder-client",
+      "ms-vscode.vscode-restclient",
+      "redhat.vscode-yaml",
+      "ms-vscode.vscode-markdown",
+      "yzhang.markdown-all-in-one",
+      "ms-vscode.vscode-env",
+      "ms-vscode.vscode-dotenv",
+      "ms-vscode.vscode-json5"
+    ]
+  },
+  "tasks": {
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "label": "Install All Dependencies",
+        "type": "shell",
+        "command": "npm",
+        "args": ["run", "install:all"],
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Start Frontend Dev Server",
+        "type": "shell",
+        "command": "npm",
+        "args": ["run", "dev:frontend"],
+        "options": {
+          "cwd": "${workspaceFolder}"
+        },
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "new"
+        },
+        "isBackground": true,
+        "problemMatcher": {
+          "owner": "typescript",
+          "source": "ts",
+          "applyTo": "closedDocuments",
+          "fileLocation": "relative",
+          "pattern": "$tsc",
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": ".*",
+            "endsPattern": ".*Local:.*http://localhost:3000.*"
+          }
+        }
+      },
+      {
+        "label": "Deploy to Dev Environment",
+        "type": "shell",
+        "command": "npm",
+        "args": ["run", "deploy:dev"],
+        "group": "build",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared"
+        },
+        "problemMatcher": []
+      },
+      {
+        "label": "Run All Tests",
+        "type": "shell",
+        "command": "npm",
+        "args": ["run", "test:all"],
+        "group": "test",
+        "presentation": {
+          "echo": true,
+          "reveal": "always",
+          "focus": false,
+          "panel": "shared"
+        },
+        "problemMatcher": []
+      }
+    ]
+  },
+  "launch": {
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Debug Frontend (React)",
+        "type": "chrome",
+        "request": "launch",
+        "url": "http://localhost:3000",
+        "webRoot": "${workspaceFolder}/frontend/src",
+        "sourceMaps": true,
+        "userDataDir": false,
+        "runtimeArgs": ["--disable-web-security", "--disable-features=VizDisplayCompositor"]
+      },
+      {
+        "name": "Debug Lambda Function (Local)",
+        "type": "node",
+        "request": "launch",
+        "program": "${workspaceFolder}/backend/src/functions/${input:lambdaFunction}/handler.ts",
+        "cwd": "${workspaceFolder}/backend",
+        "env": {
+          "NODE_ENV": "development",
+          "AWS_PROFILE": "econlens-admin",
+          "AWS_REGION": "us-east-1"
+        },
+        "runtimeArgs": ["-r", "ts-node/register"],
+        "console": "integratedTerminal",
+        "internalConsoleOptions": "neverOpen"
+      }
+    ],
+    "inputs": [
+      {
+        "id": "lambdaFunction",
+        "description": "Select Lambda function to debug",
+        "type": "pickString",
+        "options": [
+          "auth/register",
+          "auth/login",
+          "auth/refresh",
+          "user/profile",
+          "portfolio/create",
+          "portfolio/read",
+          "portfolio/update",
+          "portfolio/delete",
+          "scenario/analyze",
+          "scenario/results"
+        ]
+      }
+    ]
+  }
+}

@@ -1,6 +1,7 @@
 # EconLens Professional .gitignore
-# Comprehensive exclusions for Node.js, React, AWS CDK, and development tools
-# Version: 1.0 | Last Updated: 2025-01-16
+# Comprehensive exclusions for AWS CDK TypeScript React monorepo
+# Version: 2.0 | Last Updated: 2025-01-16
+# Optimized for: Node.js 20, React 18+, AWS CDK, TypeScript, PostgreSQL
 
 # =============================================================================
 # DEPENDENCIES AND PACKAGE MANAGERS
@@ -8,9 +9,14 @@
 node_modules/
 jspm_packages/
 bower_components/
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
+.pnp
+.pnp.js
+
+# Package manager lock files (keep one, ignore others)
+# Uncomment the ones you want to ignore
+# package-lock.json
+# yarn.lock
+# pnpm-lock.yaml
 
 # =============================================================================
 # BUILD OUTPUTS AND DISTRIBUTION
@@ -19,9 +25,16 @@ build/
 dist/
 .next/
 out/
+.nuxt/
+.vuepress/dist
+
+# Monorepo specific build outputs
 backend/dist/
+backend/build/
 frontend/build/
+frontend/dist/
 infrastructure/cdk.out/
+infrastructure/dist/
 
 # =============================================================================
 # ENVIRONMENT VARIABLES AND SECRETS
@@ -32,32 +45,56 @@ infrastructure/cdk.out/
 .env.test.local
 .env.production.local
 .env.staging
+.env.*.local
+
+# Secrets and configuration files
 secrets.json
 config/secrets/
 *.secret
-
-# =============================================================================
-# AWS SPECIFIC FILES
-# =============================================================================
-.aws/
+*.key
 *.pem
-cdk.out/
-cdk.context.json
+*.crt
+*.csr
+
+# AWS credentials and configuration
+.aws/
 aws-exports.js
 awsconfiguration.json
 amplifyconfiguration.json
-*.tfstate
-*.tfstate.backup
-.terraform/
-.aws-sam/
+amplifyconfiguration.dart
+amplify-build-config.json
+amplify-gradle-config.json
+amplifytools.xcconfig
 
 # =============================================================================
-# CDK AND INFRASTRUCTURE
+# AWS CDK AND INFRASTRUCTURE
 # =============================================================================
+cdk.out/
+cdk.context.json
+*.tsbuildinfo
+
+# CDK generated files (keep source, ignore compiled)
+*.js
+*.d.ts
 *.js.map
 *.d.ts.map
+
+# Exception: Keep Jest config
 !jest.config.js
-*.tsbuildinfo
+!jest.config.ts
+!**/jest.config.js
+!**/jest.config.ts
+
+# AWS SAM
+.aws-sam/
+samconfig.toml
+
+# Terraform (if used alongside CDK)
+*.tfstate
+*.tfstate.backup
+*.tfstate.lock.info
+.terraform/
+.terraform.lock.hcl
 
 # =============================================================================
 # LOGGING AND DEBUGGING
@@ -68,8 +105,12 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
+.pnpm-debug.log*
+
+# Runtime debugging
 *.cpuprofile
 *.heapprofile
+*.heapsnapshot
 
 # =============================================================================
 # TESTING AND COVERAGE
@@ -77,44 +118,29 @@ lerna-debug.log*
 coverage/
 .nyc_output/
 *.lcov
-.eslintcache
-.stylelintcache
+test-results/
+playwright-report/
+playwright/.cache/
 
 # =============================================================================
-# DEVELOPMENT TOOLS AND IDEs
+# CACHE AND TEMPORARY FILES
 # =============================================================================
-.vscode/settings.json
-.vscode/launch.json
-.vscode/extensions.json
-.idea/
-*.swp
-*.swo
-*~
-
-# =============================================================================
-# OPERATING SYSTEM FILES
-# =============================================================================
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# =============================================================================
-# TEMPORARY AND CACHE FILES
-# =============================================================================
-tmp/
-temp/
-.tmp/
-.temp/
 .cache/
 .parcel-cache/
 .rpt2_cache/
 .rts2_cache_cjs/
 .rts2_cache_es/
 .rts2_cache_umd/
+.fusebox/
+.eslintcache
+.stylelintcache
+.turbo/
+
+# Temporary directories
+tmp/
+temp/
+.tmp/
+.temp/
 
 # =============================================================================
 # DATABASE FILES
@@ -122,21 +148,154 @@ temp/
 *.db
 *.sqlite
 *.sqlite3
+.dynamodb/
+
+# Database dumps and backups
+*.sql
+*.dump
+*.backup
 
 # =============================================================================
-# APPLICATION SPECIFIC
+# DEVELOPMENT TOOLS AND IDEs
 # =============================================================================
-backend/uploads/
-frontend/public/uploads/
-uploads/
+# VS Code (keep workspace config, ignore user settings)
+.vscode/settings.json
+.vscode/launch.json
+.vscode/extensions.json
+.vscode/tasks.json
+.vscode/keybindings.json
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Vim
+*.swp
+*.swo
+*~
+.netrwhist
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
 
 # =============================================================================
-# CERTIFICATES AND SECURITY
+# OPERATING SYSTEM FILES
 # =============================================================================
-*.crt
-*.key
-*.csr
-*.pem
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+.AppleDouble
+.LSOverride
+Icon
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# =============================================================================
+# RUNTIME DATA AND PROCESSES
+# =============================================================================
+pids/
+*.pid
+*.seed
+*.pid.lock
+lib-cov/
+
+# =============================================================================
+# OPTIONAL NPM/YARN CONFIGURATIONS
+# =============================================================================
+.npm
+.node_repl_history
+.yarn-integrity
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
+
+# =============================================================================
+# FRAMEWORK SPECIFIC
+# =============================================================================
+# Next.js
+.next/
+out/
+
+# Nuxt.js
+.nuxt/
+dist/
+
+# Gatsby
+.cache/
+public/
+
+# Storybook
+.out/
+.storybook-out/
+
+# SvelteKit
+.svelte-kit/
+
+# =============================================================================
+# AWS AMPLIFY
+# =============================================================================
+amplify/\#current-cloud-backend
+amplify/.config/local-*
+amplify/logs/
+amplify/mock-data/
+amplify/backend/amplify-meta.json
+amplify/backend/awscloudformation/
+amplify/backend/.temp/
+amplify/backend/api/
+amplify/backend/auth/
+amplify/backend/function/
+amplify/backend/hosting/
+amplify/backend/interactions/
+amplify/backend/notifications/
+amplify/backend/storage/
+amplify/backend/analytics/
+amplify/backend/xr/
+
+# =============================================================================
+# DOCKER
+# =============================================================================
+.dockerignore
+Dockerfile*
+docker-compose*.yml
+.docker/
 
 # =============================================================================
 # ARCHIVE AND COMPRESSED FILES
@@ -149,49 +308,22 @@ uploads/
 *.rar
 *.tar
 *.zip
+*.tgz
+*.tar.gz
 
 # =============================================================================
-# RUNTIME DATA
+# APPLICATION SPECIFIC
 # =============================================================================
-pids/
-*.pid
-*.seed
-*.pid.lock
+# Upload directories
+backend/uploads/
+frontend/public/uploads/
+uploads/
+public/uploads/
 
-# =============================================================================
-# OPTIONAL CONFIGURATIONS
-# =============================================================================
-.npm
-.node_repl_history
-.yarn-integrity
-.tern-port
-
-# =============================================================================
-# FRAMEWORK SPECIFIC
-# =============================================================================
-# Next.js
-.next
-out
-
-# Nuxt.js
-.nuxt
-
-# Gatsby
-.cache/
-public
-
-# Storybook
-.out
-.storybook-out
-
-# AWS Amplify
-amplify/\#current-cloud-backend
-amplify/.config/local-*
-amplify/logs
-amplify/mock-data
-amplify/backend/amplify-meta.json
-amplify/backend/awscloudformation
-amplify/backend/.temp
+# User generated content
+user-content/
+media/
+assets/uploads/
 
 # =============================================================================
 # BACKUP FILES
@@ -199,300 +331,79 @@ amplify/backend/.temp
 *.backup
 *.bak
 *.old
+*.orig
+*.rej
 
-# Dependencies
-node_modules/
-jspm_packages/
-bower_components/
+# =============================================================================
+# PERFORMANCE AND MONITORING
+# =============================================================================
+*.cpuprofile
+*.heapprofile
+*.heapsnapshot
+clinic.json
 
-# Production builds
-build/
-dist/
-.next/
-out/
-
-# Environment variables and configuration
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-.env.staging
-
-# AWS specific
-.aws/
+# =============================================================================
+# SECURITY AND COMPLIANCE
+# =============================================================================
+# Never commit these!
 *.pem
-cdk.out/
-cdk.context.json
-aws-exports.js
+*.key
+*.crt
+*.csr
+*.p12
+*.pfx
+secrets/
+.secrets/
+*.secret
+.env.secret
 
-# CDK
-*.js.map
-*.d.ts.map
+# =============================================================================
+# LOCAL DEVELOPMENT
+# =============================================================================
+.local/
+local/
+dev/
+development/
 
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-lerna-debug.log*
-
-# Runtime data
-pids
-*.pid
-*.seed
-*.pid.lock
-
-# Coverage directory used by tools like istanbul
-coverage/
-*.lcov
-.nyc_output/
-
-# Dependency directories
-node_modules/
-jspm_packages/
-
-# Optional npm cache directory
-.npm
-
-# Optional eslint cache
-.eslintcache
-
-# Optional REPL history
-.node_repl_history
-
-# Output of 'npm pack'
-*.tgz
-
-# Yarn Integrity file
-.yarn-integrity
-
-# dotenv environment variables file
-.env
-.env.test
-
-# parcel-bundler cache (https://parceljs.org/)
-.cache
-.parcel-cache
-
-# next.js build output
-.next
-
-# nuxt.js build output
-.nuxt
-
-# vuepress build output
-.vuepress/dist
-
-# Serverless directories
-.serverless/
-
-# FuseBox cache
-.fusebox/
-
-# DynamoDB Local files
-.dynamodb/
-
+# =============================================================================
+# MISC
+# =============================================================================
 # TernJS port file
 .tern-port
 
-# IDE and Editor files
-.vscode/settings.json
-.vscode/launch.json
-.vscode/extensions.json
-.idea/
-*.swp
-*.swo
-*~
+# Stores VSCode versions used for testing VSCode extensions
+.vscode-test
 
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
+# yarn v2
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+.pnp.*
 
-# Testing
-/coverage
-/.nyc_output
+# Serverless Framework
+.serverless/
 
-# Temporary folders
-tmp/
-temp/
-.tmp/
-.temp/
+# =============================================================================
+# EconLens SPECIFIC
+# =============================================================================
+# Portfolio uploads and user data
+portfolios/
+user-data/
+analysis-results/
 
-# Package managers
-package-lock.json
-yarn.lock
-pnpm-lock.yaml
+# AI model cache
+.ai-cache/
+bedrock-cache/
 
-# TypeScript
-*.tsbuildinfo
+# Scenario analysis results
+scenario-results/
+analysis-cache/
 
-# Build artifacts
-backend/dist/
-frontend/build/
-infrastructure/cdk.out/
+# Local database data
+postgres-data/
+db-data/
 
-# Database
-*.db
-*.sqlite
-*.sqlite3
-
-# Docker
-.dockerignore
-Dockerfile
-docker-compose.yml
-docker-compose.override.yml
-
-# Terraform (if used alongside CDK)
-*.tfstate
-*.tfstate.backup
-.terraform/
-
-# Local development
-.local/
-local/
-
-# Backup files
-*.backup
-*.bak
-*.old
-
-# CDK specific
-cdk.out
-*.js
-*.d.ts
-!jest.config.js
-
-# AWS SAM
-.aws-sam/
-
-# Lambda deployment packages
-*.zip
-
-# PyCharm
-.idea/
-
-# VS Code
-.vscode/
-
-# Emacs
-*~
-\#*\#
-/.emacs.desktop
-/.emacs.desktop.lock
-*.elc
-auto-save-list
-tramp
-.\#*
-
-# Vim
-*.swp
-*.swo
-
-# Archive files
-*.7z
-*.dmg
-*.gz
-*.iso
-*.jar
-*.rar
-*.tar
-*.zip
-
-# Application specific
-backend/uploads/
-frontend/public/uploads/
-uploads/
-
-# Certificate files
-*.crt
-*.key
-*.csr
-*.pem
-
-# API keys and secrets (never commit these!)
-secrets.json
-config/secrets/
-*.secret
-
-# Performance and profiling
-*.cpuprofile
-*.heapprofile
-
-# Jest
-/coverage/
-
-# ESLint
-.eslintcache
-
-# Stylelint
-.stylelintcache
-
-# Microbundle cache
-.rpt2_cache/
-.rts2_cache_cjs/
-.rts2_cache_es/
-.rts2_cache_umd/
-
-# Optional REPL history
-.node_repl_history
-
-# Output of 'npm pack'
-*.tgz
-
-# Yarn Integrity file
-.yarn-integrity
-
-# dotenv environment variables file
-.env
-.env.test
-.env.production
-
-# parcel-bundler cache (https://parceljs.org/)
-.cache
-.parcel-cache
-
-# Next.js build output
-.next
-out
-
-# Nuxt.js build / generate output
-.nuxt
-dist
-
-# Gatsby files
-.cache/
-public
-
-# Storybook build outputs
-.out
-.storybook-out
-
-# Temporary folders
-tmp/
-temp/
-
-# AWS Amplify
-amplify/\#current-cloud-backend
-amplify/.config/local-*
-amplify/logs
-amplify/mock-data
-amplify/backend/amplify-meta.json
-amplify/backend/awscloudformation
-amplify/backend/.temp
-build/
-dist/
-node_modules/
-aws-exports.js
-awsconfiguration.json
-amplifyconfiguration.json
-amplifyconfiguration.dart
-amplify-build-config.json
-amplify-gradle-config.json
-amplifytools.xcconfig
+# Development certificates
+dev-certs/
+local-certs/
