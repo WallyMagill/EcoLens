@@ -16,10 +16,10 @@ export class EconLensStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    // Simple VPC with single public subnet
+    // Simple VPC with two public subnets (required for RDS)
     this.vpc = new ec2.Vpc(this, 'EconLensVPC', {
       cidr: '10.0.0.0/16',
-      maxAzs: 1, // Single AZ for cost savings
+      maxAzs: 2, // Two AZs required for RDS
       subnetConfiguration: [
         {
           cidrMask: 24,
@@ -37,7 +37,7 @@ export class EconLensStack extends cdk.Stack {
       allowAllOutbound: true,
     });
 
-    // Allow HTTP, HTTPS, and SSH access
+    // Allow HTTP, HTTPS, SSH, and API access
     webSecurityGroup.addIngressRule(
       ec2.Peer.anyIpv4(),
       ec2.Port.tcp(80),
@@ -52,6 +52,11 @@ export class EconLensStack extends cdk.Stack {
       ec2.Peer.anyIpv4(),
       ec2.Port.tcp(22),
       'Allow SSH access'
+    );
+    webSecurityGroup.addIngressRule(
+      ec2.Peer.anyIpv4(),
+      ec2.Port.tcp(3001),
+      'Allow API access on port 3001'
     );
 
     // Security group for RDS database
@@ -96,10 +101,10 @@ export class EconLensStack extends cdk.Stack {
     this.ec2Instance = new ec2.Instance(this, 'EconLensWebServer', {
       vpc: this.vpc,
       instanceType: ec2.InstanceType.of(
-        ec2.InstanceClass.T2,
+        ec2.InstanceClass.T3,
         ec2.InstanceSize.MICRO
       ),
-      machineImage: ec2.MachineImage.latestAmazonLinux2(),
+      machineImage: ec2.MachineImage.latestAmazonLinux2023(),
       securityGroup: webSecurityGroup,
       role: ec2Role,
       keyName: 'econlens-keypair', // You'll need to create this key pair manually
@@ -107,9 +112,10 @@ export class EconLensStack extends cdk.Stack {
     });
 
     // Add user data script to install Node.js and setup the application
+    // Amazon Linux 2023 uses dnf package manager and includes Node.js 18 by default
     this.ec2Instance.addUserData(
-      'yum update -y',
-      'yum install -y nodejs npm git',
+      'dnf update -y',
+      'dnf install -y nodejs npm git',
       'npm install -g pm2',
       'mkdir -p /home/ec2-user/econlens',
       'chown ec2-user:ec2-user /home/ec2-user/econlens'
@@ -118,7 +124,7 @@ export class EconLensStack extends cdk.Stack {
     // RDS PostgreSQL database (db.t3.micro for free tier)
     this.database = new rds.DatabaseInstance(this, 'EconLensDatabase', {
       engine: rds.DatabaseInstanceEngine.postgres({
-        version: rds.PostgresEngineVersion.VER_14_9,
+        version: rds.PostgresEngineVersion.VER_14,
       }),
       instanceType: ec2.InstanceType.of(
         ec2.InstanceClass.T3,

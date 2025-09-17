@@ -10,56 +10,98 @@ EcoLens is a serverless portfolio analysis application that helps investors unde
 
 ## Development Commands
 
+### Workspace Management (Root Level)
+```bash
+# Install all workspace dependencies
+npm run install:all
+
+# Build all packages
+npm run build:all
+
+# Test all packages
+npm run test:all
+
+# Lint all packages
+npm run lint:all
+
+# Clean all packages
+npm run clean:all
+```
+
+### Development Servers
+```bash
+# Start frontend development server
+npm run dev:frontend
+
+# Start backend development server
+npm run dev:backend
+
+# Watch infrastructure changes
+npm run dev:infra
+```
+
 ### AWS Infrastructure
 ```bash
 # Navigate to infrastructure directory
 cd infrastructure
 
-# Install CDK dependencies
+# Install CDK dependencies (or use npm run install:infra from root)
 npm install
 
 # Synthesize CloudFormation templates
-cdk synth
+npm run synth
+# or: cdk synth --profile econlens-admin
 
-# Deploy specific stack to development environment
-cdk deploy NetworkStack-dev --profile econlens-admin
-cdk deploy DatabaseStack-dev --profile econlens-admin
-cdk deploy ComputeStack-dev --profile econlens-admin
+# Deploy infrastructure
+npm run deploy
+# or: cdk deploy --profile econlens-admin
 
-# Deploy all stacks
-cdk deploy --all --profile econlens-admin
+# Bootstrap CDK (first time only)
+npm run bootstrap
+# or: cdk bootstrap --profile econlens-admin
 
 # Destroy infrastructure (use with caution)
-cdk destroy --all --profile econlens-admin
+npm run destroy
+# or: cdk destroy --profile econlens-admin
+
+# View deployment diff
+npm run diff
+# or: cdk diff --profile econlens-admin
 ```
 
 ### Backend Development
 ```bash
-# Backend API server operations
+# Backend API server operations (from root or backend directory)
 cd backend
 
 # Install dependencies
 npm install
 
-# Start development server
+# Start development server with hot reload
 npm run dev
 
-# Run database migrations
-npm run migrate
+# Build TypeScript
+npm run build
 
-# Seed database with scenario data
-npm run seed
+# Start production server
+npm start
 
 # Run backend tests
 npm test
 
-# Run specific test file
-npm test -- --testNamePattern="portfolio"
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage
+npm run test:coverage
+
+# Deploy to EC2 (if using EC2 deployment)
+npm run deploy:ec2
 ```
 
 ### Frontend Development
 ```bash
-# Frontend React application
+# Frontend React application (from root or frontend directory)
 cd frontend
 
 # Install dependencies
@@ -79,6 +121,41 @@ npm run lint
 
 # Fix linting issues
 npm run lint:fix
+
+# Type check without emitting files
+npm run type-check
+```
+
+### Shared Package Development
+```bash
+# Shared types and utilities (from root or shared directory)
+cd shared
+
+# Build shared package
+npm run build
+
+# Watch for changes and rebuild
+npm run dev
+
+# Run shared package tests
+npm test
+
+# Lint shared code
+npm run lint
+```
+
+### Deployment Commands
+```bash
+# Deploy to development environment (from root)
+npm run deploy:dev
+
+# Deploy to production environment (from root)
+npm run deploy:prod
+
+# Individual workspace deployments
+cd infrastructure && npm run deploy
+cd backend && npm run deploy:ec2
+cd frontend && npm run build  # Build for S3/CloudFront deployment
 ```
 
 ### Database Operations
@@ -157,10 +234,15 @@ This project is designed for AI-assisted development:
 - **Warp**: Terminal operations, AWS CLI commands
 
 ### Code Organization
-- `infrastructure/`: CDK stacks organized by service (network, database, compute)
+**Monorepo Structure**: EcoLens uses npm workspaces for dependency management across packages.
+
+- `infrastructure/`: CDK stacks with AWS infrastructure as code
 - `backend/`: Express.js API with modular route/service/middleware structure
-- `frontend/`: React components with feature-based organization
+- `frontend/`: React TypeScript application with Redux Toolkit
+- `shared/`: Common types, interfaces, and utilities used across packages
 - `docs/`: Comprehensive stage-by-stage implementation guides
+- `scripts/`: Deployment and utility scripts
+- `package.json`: Root workspace configuration with cross-package commands
 
 ### Environment Management
 - Development: Uses AWS free tier resources where possible

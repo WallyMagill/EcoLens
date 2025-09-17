@@ -1,0 +1,12 @@
+{
+  "EconLens-Learning": {
+    "UserPoolClientId": "6dv1d5mtjpem1orfjfj5r4k3fg",
+    "DatabasePort": "5432",
+    "UserPoolId": "us-east-1_f9G2iTorZ",
+    "AssetsBucketName": "econlens-assets-704444257588",
+    "DatabaseSecretArn": "arn:aws:secretsmanager:us-east-1:704444257588:secret:EconLensLearningEconLensDat-rHvLOBMc1jLn-QvhZXv",
+    "EC2PublicIP": "44.203.253.29",
+    "EC2InstanceId": "i-0359d21b05f35260e",
+    "DatabaseEndpoint": "econlens-learning-econlensdatabase097a1571-8utfkzudetgn.ccnocmqomw15.us-east-1.rds.amazonaws.com"
+  }
+}
