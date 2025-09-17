@@ -2,28 +2,28 @@
   "compilerOptions": {
     "target": "ES2020",
     "lib": ["ES2020"],
+    "module": "CommonJS",
+    "declaration": true,
+    "composite": true,
+    "outDir": "./dist",
+    "rootDir": "./src",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "moduleResolution": "node",
     "resolveJsonModule": true,
+    "moduleResolution": "node",
     "baseUrl": ".",
     "paths": {
-      "@econlens/shared": ["./shared/src"]
+      "@/*": ["./src/*"]
     }
   },
-  "include": [],
+  "include": [
+    "src/**/*"
+  ],
   "exclude": [
     "node_modules",
     "dist",
-    "build", 
-    "cdk.out"
-  ],
-  "references": [
-    {"path": "./shared"},
-    {"path": "./frontend"},
-    {"path": "./backend"},
-    {"path": "./infrastructure"}
+    "**/*.test.ts"
   ]
 }

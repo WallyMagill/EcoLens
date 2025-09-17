@@ -1,0 +1,72 @@
+{
+  "name": "econlens",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Portfolio analysis tool with AI-powered economic scenario testing",
+  "workspaces": [
+    "frontend",
+    "backend",
+    "infrastructure",
+    "shared"
+  ],
+  "scripts": {
+    "install:all": "npm install && npm run install:frontend && npm run install:backend && npm run install:infra && npm run install:shared",
+    "install:frontend": "cd frontend && npm install",
+    "install:backend": "cd backend && npm install",
+    "install:infra": "cd infrastructure && npm install",
+    "install:shared": "cd shared && npm install",
+    "dev:frontend": "cd frontend && npm start",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:infra": "cd infrastructure && npm run watch",
+    "build:all": "npm run build:shared && npm run build:frontend && npm run build:backend && npm run build:infra",
+    "build:frontend": "cd frontend && npm run build",
+    "build:backend": "cd backend && npm run build",
+    "build:infra": "cd infrastructure && npm run build",
+    "build:shared": "cd shared && npm run build",
+    "test:all": "npm run test:frontend && npm run test:backend && npm run test:infra && npm run test:shared",
+    "test:frontend": "cd frontend && npm test",
+    "test:backend": "cd backend && npm test",
+    "test:infra": "cd infrastructure && npm test",
+    "test:shared": "cd shared && npm test",
+    "lint:all": "npm run lint:frontend && npm run lint:backend && npm run lint:infra && npm run lint:shared",
+    "lint:frontend": "cd frontend && npm run lint",
+    "lint:backend": "cd backend && npm run lint",
+    "lint:infra": "cd infrastructure && npm run lint",
+    "lint:shared": "cd shared && npm run lint",
+    "deploy:dev": "cd infrastructure && npm run deploy:dev",
+    "deploy:prod": "cd infrastructure && npm run deploy:prod",
+    "clean:all": "npm run clean:frontend && npm run clean:backend && npm run clean:infra && npm run clean:shared",
+    "clean:frontend": "cd frontend && rm -rf build dist node_modules",
+    "clean:backend": "cd backend && rm -rf dist node_modules",
+    "clean:infra": "cd infrastructure && rm -rf cdk.out node_modules",
+    "clean:shared": "cd shared && rm -rf dist node_modules"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/WallyMagill/EcoLens.git"
+  },
+  "keywords": [
+    "portfolio",
+    "analysis",
+    "aws",
+    "serverless",
+    "ai",
+    "typescript",
+    "react",
+    "cdk"
+  ],
+  "author": "Walter Magill",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "eslint": "^8.55.0",
+    "prettier": "^3.1.0"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1"
+  }
+}
