@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import Button from '../components/ui/Button';
 import ErrorMessage from '../components/ui/ErrorMessage';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
-import { getCurrentAuthUser } from '../services/auth';
+import { changePassword, getCurrentAuthUser } from '../services/auth';
 import { AppDispatch, RootState } from '../store';
 import { logoutUser } from '../store/authSlice';
 
@@ -68,12 +68,15 @@ const ProfilePage: React.FC = () => {
     }
 
     setIsChangingPassword(true);
+    setMessage(null);
+    
     try {
-      // In a real app, you'd call the change password API
+      await changePassword(passwordForm.currentPassword, passwordForm.newPassword);
       setMessage({ type: 'success', text: 'Password changed successfully!' });
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to change password. Please try again.' });
+    } catch (error: any) {
+      console.error('Password change error:', error);
+      setMessage({ type: 'error', text: error.message || 'Failed to change password. Please try again.' });
     } finally {
       setIsChangingPassword(false);
     }

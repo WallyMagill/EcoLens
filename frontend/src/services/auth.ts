@@ -134,3 +134,14 @@ export const forgotPasswordSubmit = async (username: string, code: string, newPa
     throw new Error(authError.message || 'Password reset confirmation failed');
   }
 };
+
+export const changePassword = async (oldPassword: string, newPassword: string) => {
+  try {
+    const user = await Auth.currentAuthenticatedUser();
+    const result = await Auth.changePassword(user, oldPassword, newPassword);
+    return { success: true, result };
+  } catch (error: any) {
+    console.error('Password change error:', error);
+    throw new Error(error.message || 'Failed to change password');
+  }
+};

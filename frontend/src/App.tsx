@@ -22,6 +22,7 @@ import PortfolioCreatePage from './pages/portfolio/PortfolioCreatePage';
 import PortfolioEditPage from './pages/portfolio/PortfolioEditPage';
 import PortfolioListPage from './pages/portfolio/PortfolioListPage';
 import PortfolioViewPage from './pages/portfolio/PortfolioViewPage';
+import ScenariosPage from './pages/scenarios/ScenariosPage';
 
 // Initialize Amplify
 import './utils/amplify-config';
@@ -100,6 +101,15 @@ const App: React.FC = () => {
                 <Layout>
                   <ErrorBoundary>
                     <PortfolioListPage />
+                  </ErrorBoundary>
+                </Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/scenarios" element={
+              <ProtectedRoute>
+                <Layout>
+                  <ErrorBoundary>
+                    <ScenariosPage />
                   </ErrorBoundary>
                 </Layout>
               </ProtectedRoute>

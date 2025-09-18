@@ -36,6 +36,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { path: '/', label: 'Home' },
     { path: '/dashboard', label: 'Dashboard' },
     { path: '/portfolios', label: 'Portfolios' },
+    { path: '/scenarios', label: 'Scenarios' },
     { path: '/api-test', label: 'API Test' },
     { path: '/auth-test', label: 'Auth Test' },
   ];
