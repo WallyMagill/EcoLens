@@ -1,53 +1,26 @@
-// Login page for EconLens Frontend
+import React from 'react';
+import LoginForm from '../../components/auth/LoginForm';
 
-import React, { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { AuthLayout } from '../../components/auth/AuthLayout';
-import { LoginForm } from '../../components/auth/LoginForm';
-import { AuthDebug } from '../../components/debug/AuthDebug';
-import { useAuth } from '../../contexts/AuthContext';
-
-export const LoginPage: React.FC = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const { login } = useAuth();
-  const [showDebug, setShowDebug] = useState(false);
-
-  const from = location.state?.from || '/dashboard';
-
-  const handleSuccess = () => {
-    navigate(from, { replace: true });
-  };
-
-  const handleError = (error: string) => {
-    console.error('Login error:', error);
-    
-    // Show debug component if there's an "already signed in" error
-    if (error.includes('already signed in') || error.includes('session conflict')) {
-      setShowDebug(true);
-    }
-  };
-  
-  const handleAuthCleared = () => {
-    setShowDebug(false);
-  };
-
+const LoginPage: React.FC = () => {
   return (
-    <AuthLayout
-      title="Welcome back"
-      subtitle="Sign in to your EconLens account"
-    >
-      {showDebug && (
-        <AuthDebug onAuthCleared={handleAuthCleared} />
-      )}
-      
-      <LoginForm
-        onSuccess={handleSuccess}
-        onError={handleError}
-      />
-    </AuthLayout>
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="text-center">
+          <div className="mx-auto h-12 w-12 bg-blue-600 rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-xl">E</span>
+          </div>
+          <h1 className="mt-4 text-3xl font-bold text-gray-900">EconLens</h1>
+          <p className="mt-2 text-sm text-gray-600">
+            Portfolio Analysis Platform
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <LoginForm />
+      </div>
+    </div>
   );
 };
 
 export default LoginPage;
-

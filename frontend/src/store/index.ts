@@ -1,12 +1,29 @@
-import { configureStore } from '@reduxjs/toolkit';
-import { portfolioSlice } from './slices/portfolioSlice';
-import { uiSlice } from './slices/uiSlice';
+import { combineReducers, configureStore } from '@reduxjs/toolkit';
+import { persistReducer, persistStore } from 'redux-persist';
+import storage from 'redux-persist/lib/storage';
+
+import authSlice from './authSlice';
+import portfolioSlice from './portfolioSlice';
+import scenarioSlice from './scenarioSlice';
+import uiSlice from './uiSlice';
+
+const persistConfig = {
+  key: 'root',
+  storage,
+  whitelist: ['auth'] // Only persist auth state
+};
+
+const rootReducer = combineReducers({
+  auth: authSlice,
+  portfolios: portfolioSlice,
+  scenarios: scenarioSlice,
+  ui: uiSlice,
+});
+
+const persistedReducer = persistReducer(persistConfig, rootReducer);
 
 export const store = configureStore({
-  reducer: {
-    portfolio: portfolioSlice.reducer,
-    ui: uiSlice.reducer,
-  },
+  reducer: persistedReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
@@ -14,6 +31,8 @@ export const store = configureStore({
       },
     }),
 });
+
+export const persistor = persistStore(store);
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;

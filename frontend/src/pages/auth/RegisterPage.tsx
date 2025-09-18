@@ -1,38 +1,26 @@
-// Registration page for EconLens Frontend
-
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { AuthLayout } from '../../components/auth/AuthLayout';
-import { RegisterForm } from '../../components/auth/RegisterForm';
-import { useAuth } from '../../contexts/AuthContext';
+import RegisterForm from '../../components/auth/RegisterForm';
 
-export const RegisterPage: React.FC = () => {
-  const navigate = useNavigate();
-  const { register } = useAuth();
-
-  const handleSuccess = (email: string) => {
-    navigate('/verify-email', { 
-      state: { email },
-      replace: true 
-    });
-  };
-
-  const handleError = (error: string) => {
-    console.error('Registration error:', error);
-  };
-
+const RegisterPage: React.FC = () => {
   return (
-    <AuthLayout
-      title="Create your account"
-      subtitle="Join EconLens to start analyzing your portfolios"
-    >
-      <RegisterForm
-        onSuccess={handleSuccess}
-        onError={handleError}
-      />
-    </AuthLayout>
+    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="text-center">
+          <div className="mx-auto h-12 w-12 bg-blue-600 rounded-lg flex items-center justify-center">
+            <span className="text-white font-bold text-xl">E</span>
+          </div>
+          <h1 className="mt-4 text-3xl font-bold text-gray-900">EconLens</h1>
+          <p className="mt-2 text-sm text-gray-600">
+            Portfolio Analysis Platform
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <RegisterForm />
+      </div>
+    </div>
   );
 };
 
 export default RegisterPage;
-

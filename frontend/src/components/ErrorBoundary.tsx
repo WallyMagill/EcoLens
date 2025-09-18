@@ -1,8 +1,4 @@
-// Error boundary component for EconLens Frontend
-
-import { AlertTriangle, Home, RefreshCw } from 'lucide-react';
 import { Component, ErrorInfo, ReactNode } from 'react';
-import { Button } from './ui/Button';
 
 interface Props {
   children: ReactNode;
@@ -11,107 +7,63 @@ interface Props {
 
 interface State {
   hasError: boolean;
-  error: Error | null;
-  errorInfo: ErrorInfo | null;
+  error?: Error;
 }
 
-export class ErrorBoundary extends Component<Props, State> {
-  constructor(props: Props) {
-    super(props);
-    this.state = {
-      hasError: false,
-      error: null,
-      errorInfo: null,
-    };
-  }
-
-  static getDerivedStateFromError(error: Error): State {
-    return {
-      hasError: true,
-      error,
-      errorInfo: null,
-    };
-  }
-
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    this.setState({
-      error,
-      errorInfo,
-    });
-
-    // Log error to console in development
-    if (process.env.NODE_ENV === 'development') {
-      console.error('ErrorBoundary caught an error:', error, errorInfo);
-    }
-
-    // TODO: Log error to error reporting service in production
-    // Example: logErrorToService(error, errorInfo);
-  }
-
-  handleRetry = () => {
-    this.setState({
-      hasError: false,
-      error: null,
-      errorInfo: null,
-    });
+class ErrorBoundary extends Component<Props, State> {
+  public state: State = {
+    hasError: false,
   };
 
-  handleGoHome = () => {
-    window.location.href = '/dashboard';
-  };
+  public static getDerivedStateFromError(error: Error): State {
+    return { hasError: true, error };
+  }
 
-  render() {
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('ErrorBoundary caught an error:', error, errorInfo);
+  }
+
+  public render() {
     if (this.state.hasError) {
-      // Custom fallback UI
       if (this.props.fallback) {
         return this.props.fallback;
       }
 
-      // Default error UI
       return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
-          <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
-            <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-6">
-              <AlertTriangle className="h-8 w-8 text-red-600" />
-            </div>
-            
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">
-              Something went wrong
-            </h1>
-            
-            <p className="text-gray-600 mb-6">
-              We're sorry, but something unexpected happened. Please try refreshing the page or contact support if the problem persists.
-            </p>
-
-            {process.env.NODE_ENV === 'development' && this.state.error && (
-              <div className="mb-6 p-4 bg-gray-100 rounded-lg text-left">
-                <h3 className="text-sm font-medium text-gray-900 mb-2">Error Details:</h3>
-                <pre className="text-xs text-gray-600 whitespace-pre-wrap">
-                  {this.state.error.toString()}
-                </pre>
-                {this.state.errorInfo && (
-                  <pre className="text-xs text-gray-600 whitespace-pre-wrap mt-2">
-                    {this.state.errorInfo.componentStack}
-                  </pre>
-                )}
+          <div className="max-w-md w-full bg-white shadow-lg rounded-lg p-6">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <svg className="h-8 w-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.5 0L4.268 18.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
               </div>
-            )}
-
-            <div className="flex space-x-3">
-              <Button
-                variant="outline"
-                onClick={this.handleGoHome}
-                leftIcon={<Home className="h-4 w-4" />}
-              >
-                Go Home
-              </Button>
-              <Button
-                variant="primary"
-                onClick={this.handleRetry}
-                leftIcon={<RefreshCw className="h-4 w-4" />}
-              >
-                Try Again
-              </Button>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-gray-900">
+                  Something went wrong
+                </h3>
+                <div className="mt-2 text-sm text-gray-500">
+                  <p>An unexpected error occurred. Please try refreshing the page.</p>
+                  {process.env.NODE_ENV === 'development' && this.state.error && (
+                    <details className="mt-2">
+                      <summary className="cursor-pointer text-red-600">Error details</summary>
+                      <pre className="mt-2 text-xs text-red-600 whitespace-pre-wrap">
+                        {this.state.error.message}
+                        {'\n'}
+                        {this.state.error.stack}
+                      </pre>
+                    </details>
+                  )}
+                </div>
+                <div className="mt-4">
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    Refresh Page
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -123,4 +75,3 @@ export class ErrorBoundary extends Component<Props, State> {
 }
 
 export default ErrorBoundary;
-
