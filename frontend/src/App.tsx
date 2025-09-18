@@ -9,6 +9,7 @@ import { AppDispatch, persistor, store } from './store';
 import { checkAuthStatus } from './store/authSlice';
 
 // Pages
+import AuthTest from './components/auth/AuthTest';
 import ForgotPasswordForm from './components/auth/ForgotPasswordForm';
 import ApiTest from './pages/ApiTest';
 import Dashboard from './pages/Dashboard';
@@ -17,6 +18,10 @@ import ProfilePage from './pages/ProfilePage';
 import LoginPage from './pages/auth/LoginPage';
 import RegisterPage from './pages/auth/RegisterPage';
 import VerifyEmailPage from './pages/auth/VerifyEmailPage';
+import PortfolioCreatePage from './pages/portfolio/PortfolioCreatePage';
+import PortfolioEditPage from './pages/portfolio/PortfolioEditPage';
+import PortfolioListPage from './pages/portfolio/PortfolioListPage';
+import PortfolioViewPage from './pages/portfolio/PortfolioViewPage';
 
 // Initialize Amplify
 import './utils/amplify-config';
@@ -77,6 +82,51 @@ const App: React.FC = () => {
                 <Layout>
                   <ErrorBoundary>
                     <ApiTest />
+                  </ErrorBoundary>
+                </Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/auth-test" element={
+              <ProtectedRoute>
+                <Layout>
+                  <ErrorBoundary>
+                    <AuthTest />
+                  </ErrorBoundary>
+                </Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/portfolios" element={
+              <ProtectedRoute>
+                <Layout>
+                  <ErrorBoundary>
+                    <PortfolioListPage />
+                  </ErrorBoundary>
+                </Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/portfolio/:id" element={
+              <ProtectedRoute>
+                <Layout>
+                  <ErrorBoundary>
+                    <PortfolioViewPage />
+                  </ErrorBoundary>
+                </Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/portfolio/:id/edit" element={
+              <ProtectedRoute>
+                <Layout>
+                  <ErrorBoundary>
+                    <PortfolioEditPage />
+                  </ErrorBoundary>
+                </Layout>
+              </ProtectedRoute>
+            } />
+            <Route path="/portfolio/create" element={
+              <ProtectedRoute>
+                <Layout>
+                  <ErrorBoundary>
+                    <PortfolioCreatePage />
                   </ErrorBoundary>
                 </Layout>
               </ProtectedRoute>

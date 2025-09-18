@@ -15,7 +15,11 @@ const app = express();
 app.use(helmet());
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: [
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+      process.env.FRONTEND_URL || 'http://44.203.253.29:3000'
+    ],
     credentials: true,
   })
 );

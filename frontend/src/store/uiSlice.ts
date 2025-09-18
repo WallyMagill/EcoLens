@@ -1,6 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-interface Notification {
+interface UINotification {
   id: string;
   type: 'success' | 'error' | 'warning' | 'info';
   title: string;
@@ -17,7 +17,7 @@ interface Modal {
 
 interface UIState {
   globalLoading: boolean;
-  notifications: Notification[];
+  notifications: UINotification[];
   modals: Modal[];
   sidebarOpen: boolean;
   theme: 'light' | 'dark';
@@ -38,8 +38,8 @@ const uiSlice = createSlice({
     setGlobalLoading: (state, action: PayloadAction<boolean>) => {
       state.globalLoading = action.payload;
     },
-    addNotification: (state, action: PayloadAction<Omit<Notification, 'id' | 'timestamp'>>) => {
-      const notification: Notification = {
+    addNotification: (state, action: PayloadAction<Omit<UINotification, 'id' | 'timestamp'>>) => {
+      const notification: UINotification = {
         ...action.payload,
         id: Date.now().toString(),
         timestamp: Date.now(),

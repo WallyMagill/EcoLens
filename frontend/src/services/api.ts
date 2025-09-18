@@ -1,5 +1,6 @@
 import type {
     ApiResponse,
+    CreatePortfolioRequest,
     HealthResponse,
     Portfolio,
     Scenario
@@ -39,6 +40,18 @@ class ApiClient {
       });
 
       clearTimeout(timeoutId);
+
+      // Handle 401 Unauthorized - token might be expired
+      if (response.status === 401) {
+        return {
+          error: {
+            message: 'Authentication required. Please sign in again.',
+            status: 401,
+            timestamp: new Date().toISOString(),
+          },
+          success: false,
+        };
+      }
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -130,6 +143,35 @@ class ApiClient {
   // Get single scenario by ID
   async getScenario(id: string): Promise<ApiResponse<Scenario>> {
     return this.request<Scenario>(`${API_ENDPOINTS.SCENARIOS}/${id}`);
+  }
+
+  // Create new portfolio
+  async createPortfolio(portfolioData: CreatePortfolioRequest): Promise<ApiResponse<Portfolio>> {
+    return this.request<Portfolio>(API_ENDPOINTS.PORTFOLIOS, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(portfolioData),
+    });
+  }
+
+  // Update portfolio
+  async updatePortfolio(id: string, portfolioData: CreatePortfolioRequest): Promise<ApiResponse<Portfolio>> {
+    return this.request<Portfolio>(`${API_ENDPOINTS.PORTFOLIOS}/${id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(portfolioData),
+    });
+  }
+
+  // Delete portfolio
+  async deletePortfolio(id: string): Promise<ApiResponse<void>> {
+    return this.request<void>(`${API_ENDPOINTS.PORTFOLIOS}/${id}`, {
+      method: 'DELETE',
+    });
   }
 }
 

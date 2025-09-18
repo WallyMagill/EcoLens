@@ -7,7 +7,7 @@ set -e
 
 # Configuration
 EC2_USER="ec2-user"
-EC2_HOST=""  # Will be set from CDK output
+# EC2_HOST will be set from environment variable
 EC2_KEY_PATH="~/.ssh/econlens-keypair.pem"
 APP_DIR="/home/ec2-user/econlens"
 BACKEND_DIR="$APP_DIR/backend"
@@ -32,11 +32,12 @@ echo "📦 Building backend application..."
 npm run build
 
 echo "📁 Creating deployment archive..."
-tar -czf econlens-backend.tar.gz \
-    dist/ \
-    package.json \
-    package-lock.json \
-    env.example
+# Create list of files that exist
+FILES_TO_ARCHIVE="dist/ package.json"
+[ -f "package-lock.json" ] && FILES_TO_ARCHIVE="$FILES_TO_ARCHIVE package-lock.json"
+[ -f "env.example" ] && FILES_TO_ARCHIVE="$FILES_TO_ARCHIVE env.example"
+
+tar -czf econlens-backend.tar.gz $FILES_TO_ARCHIVE
 
 echo "🚀 Uploading to EC2 instance ($EC2_HOST)..."
 scp -i "${EC2_KEY_PATH/#\~/$HOME}" \

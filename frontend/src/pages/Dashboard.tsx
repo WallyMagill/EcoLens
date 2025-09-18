@@ -1,20 +1,35 @@
+import { Plus } from 'lucide-react';
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import PortfolioSummaryCard, { PortfolioSummaryCardSkeleton } from '../components/portfolio/PortfolioSummaryCard';
 import Button from '../components/ui/Button';
 import ErrorMessage from '../components/ui/ErrorMessage';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import { AppDispatch, RootState } from '../store';
 import { fetchPortfolios } from '../store/portfolioSlice';
 import { fetchScenarios } from '../store/scenarioSlice';
-import type { PortfolioAsset } from '../types/api';
 
 const Dashboard: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
   const { items: portfolios, loading: portfoliosLoading, error: portfoliosError } = useSelector((state: RootState) => state.portfolios);
   const { availableScenarios: scenarios, loading: scenariosLoading, error: scenariosError } = useSelector((state: RootState) => state.scenarios);
 
   useEffect(() => {
     loadData();
+  }, []);
+
+  // Refresh data when component becomes visible (e.g., returning from create/edit)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        loadData();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
 
   const loadData = async () => {
@@ -63,9 +78,18 @@ const Dashboard: React.FC = () => {
             Overview of your portfolios and scenarios
           </p>
         </div>
-        <Button onClick={loadData} loading={loading}>
-          Refresh Data
-        </Button>
+        <div className="flex space-x-3">
+          <Button 
+            onClick={() => navigate('/portfolio/create')}
+            className="flex items-center"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Create Portfolio
+          </Button>
+          <Button variant="secondary" onClick={loadData} loading={loading}>
+            Refresh Data
+          </Button>
+        </div>
       </div>
 
       {error && (
@@ -158,8 +182,7 @@ const Dashboard: React.FC = () => {
                   <dd className="text-lg font-medium text-gray-900">
                     {formatCurrency(
                       safePortfolios.reduce((total, portfolio) => 
-                        total + (portfolio.assets?.reduce((assetTotal: number, asset: PortfolioAsset) => 
-                          assetTotal + asset.value, 0) || 0), 0
+                        total + (portfolio.totalValue || 0), 0
                       )
                     )}
                   </dd>
@@ -173,42 +196,50 @@ const Dashboard: React.FC = () => {
       {/* Portfolios Section */}
       <div className="bg-white shadow rounded-lg">
         <div className="px-4 py-5 sm:p-6">
-          <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
-            Portfolios
-          </h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg leading-6 font-medium text-gray-900">
+              Recent Portfolios
+            </h3>
+            <Button
+              variant="secondary"
+              onClick={() => navigate('/portfolios')}
+              className="text-sm"
+            >
+              View All
+            </Button>
+          </div>
           
-          {safePortfolios.length === 0 ? (
+          {portfoliosLoading ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {[1, 2, 3].map((i) => (
+                <PortfolioSummaryCardSkeleton key={i} />
+              ))}
+            </div>
+          ) : safePortfolios.length === 0 ? (
             <div className="text-center py-8">
               <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No portfolios</h3>
-              <p className="mt-1 text-sm text-gray-500">Get started by creating a new portfolio.</p>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">No portfolios yet</h3>
+              <p className="mt-1 text-sm text-gray-500">Create your first portfolio to get started.</p>
+              <div className="mt-4">
+                <Button 
+                  onClick={() => navigate('/portfolio/create')}
+                  className="flex items-center mx-auto"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Your First Portfolio
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {safePortfolios.map((portfolio) => (
-                <div key={portfolio.id} className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-lg font-medium text-gray-900">{portfolio.name}</h4>
-                    <span className="text-sm text-gray-500">{portfolio.assets?.length || 0} assets</span>
-                  </div>
-                  {portfolio.description && (
-                    <p className="mt-2 text-sm text-gray-600">{portfolio.description}</p>
-                  )}
-                  <div className="mt-3 text-sm text-gray-500">
-                    <p>Created: {formatDate(portfolio.createdAt)}</p>
-                    <p>Updated: {formatDate(portfolio.updatedAt)}</p>
-                  </div>
-                  {portfolio.assets && portfolio.assets.length > 0 && (
-                    <div className="mt-3">
-                      <p className="text-sm font-medium text-gray-700">Total Value:</p>
-                      <p className="text-lg font-semibold text-green-600">
-                        {formatCurrency(portfolio.assets.reduce((total: number, asset: PortfolioAsset) => total + asset.value, 0))}
-                      </p>
-                    </div>
-                  )}
-                </div>
+              {safePortfolios.slice(0, 6).map((portfolio) => (
+                <PortfolioSummaryCard
+                  key={portfolio.id}
+                  portfolio={portfolio}
+                  onClick={(id) => navigate(`/portfolio/${id}`)}
+                />
               ))}
             </div>
           )}

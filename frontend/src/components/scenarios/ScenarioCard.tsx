@@ -1,10 +1,11 @@
+import { AlertTriangle, CheckCircle, Circle, Clock, TrendingUp } from 'lucide-react';
 import React from 'react';
-import { CheckCircle, Circle, AlertTriangle, TrendingUp, Clock } from 'lucide-react';
 import type { Scenario } from '../../types/api';
 
 interface ScenarioCardProps {
   scenario: Scenario;
   isSelected: boolean;
+  // eslint-disable-next-line no-unused-vars
   onSelect: (scenarioId: string) => void;
 }
 

@@ -1,11 +1,13 @@
+import { Calendar, DollarSign, MoreVertical, TrendingUp } from 'lucide-react';
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { TrendingUp, DollarSign, Calendar, MoreVertical } from 'lucide-react';
 import type { Portfolio } from '../../types/api';
 
 interface PortfolioCardProps {
   portfolio: Portfolio;
+  // eslint-disable-next-line no-unused-vars
   onEdit?: (portfolio: Portfolio) => void;
+  // eslint-disable-next-line no-unused-vars
   onDelete?: (portfolio: Portfolio) => void;
 }
 
@@ -14,13 +16,13 @@ const PortfolioCard: React.FC<PortfolioCardProps> = ({
   onEdit, 
   onDelete 
 }) => {
-  const totalValue = portfolio.assets?.reduce((sum, asset) => sum + asset.value, 0) || 0;
+  const totalValue = portfolio.totalValue || 0;
   const assetCount = portfolio.assets?.length || 0;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'USD',
+      currency: portfolio.currency || 'USD',
     }).format(amount);
   };
 
@@ -69,6 +71,15 @@ const PortfolioCard: React.FC<PortfolioCardProps> = ({
             </div>
           </div>
         </div>
+
+        {/* Asset Count Badge */}
+        {assetCount > 0 && (
+          <div className="mb-4">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+              {assetCount} asset{assetCount !== 1 ? 's' : ''}
+            </span>
+          </div>
+        )}
 
         <div className="flex items-center text-sm text-gray-500 mb-4">
           <Calendar className="h-4 w-4 mr-1" />

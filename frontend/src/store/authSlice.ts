@@ -69,9 +69,13 @@ export const checkAuthStatus = createAsyncThunk(
   async () => {
     try {
       const user = await getCurrentAuthUser();
+      if (!user) {
+        throw new Error('No authenticated user found');
+      }
       return user;
     } catch (error) {
-      throw error;
+      // Don't throw error for checkAuthStatus - just return null
+      return null;
     }
   }
 );
@@ -153,7 +157,7 @@ const authSlice = createSlice({
       .addCase(checkAuthStatus.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload;
-        state.isAuthenticated = true;
+        state.isAuthenticated = !!action.payload;
       })
       .addCase(checkAuthStatus.rejected, (state) => {
         state.loading = false;

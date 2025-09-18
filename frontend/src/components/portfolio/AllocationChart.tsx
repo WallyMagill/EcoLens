@@ -1,9 +1,10 @@
 import React from 'react';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from 'recharts';
 import type { PortfolioAsset } from '../../types/api';
 
 interface AllocationChartProps {
   assets: PortfolioAsset[];
+  totalValue?: number;
   className?: string;
 }
 
@@ -12,15 +13,26 @@ const COLORS = [
   '#EC4899', '#06B6D4', '#84CC16', '#F97316', '#6366F1'
 ];
 
-const AllocationChart: React.FC<AllocationChartProps> = ({ assets, className = '' }) => {
-  const totalValue = assets.reduce((sum, asset) => sum + asset.value, 0);
+const AllocationChart: React.FC<AllocationChartProps> = ({ assets, totalValue: propTotalValue, className = '' }) => {
+  const calculatedTotalValue = assets.reduce((sum, asset) => sum + asset.dollarAmount, 0);
+  const totalValue = propTotalValue || calculatedTotalValue;
   
+  // Debug chart data processing
+  console.log('Chart processed data:', {
+    assets,
+    totalValue,
+    calculatedTotalValue,
+    propTotalValue
+  });
+
   const chartData = assets.map((asset, index) => ({
     name: asset.symbol,
-    value: asset.value,
-    percentage: totalValue > 0 ? (asset.value / totalValue) * 100 : 0,
+    value: asset.dollarAmount,
+    percentage: totalValue > 0 ? (asset.dollarAmount / totalValue) * 100 : 0,
     color: COLORS[index % COLORS.length],
   }));
+
+  console.log('Chart processed data:', chartData);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {

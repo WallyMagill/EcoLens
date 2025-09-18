@@ -35,7 +35,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const navItems = [
     { path: '/', label: 'Home' },
     { path: '/dashboard', label: 'Dashboard' },
+    { path: '/portfolios', label: 'Portfolios' },
     { path: '/api-test', label: 'API Test' },
+    { path: '/auth-test', label: 'Auth Test' },
   ];
 
   // Close user menu when clicking outside

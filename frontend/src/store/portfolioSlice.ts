@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import apiClient from '../services/api';
-import type { Portfolio } from '../types/api';
+import type { CreatePortfolioRequest, Portfolio } from '../types/api';
 
 interface PortfolioState {
   items: Portfolio[];
@@ -9,6 +9,8 @@ interface PortfolioState {
   error: string | null;
   totalValue: number;
   totalAssets: number;
+  createLoading: boolean;
+  createError: string | null;
 }
 
 const initialState: PortfolioState = {
@@ -18,6 +20,8 @@ const initialState: PortfolioState = {
   error: null,
   totalValue: 0,
   totalAssets: 0,
+  createLoading: false,
+  createError: null,
 };
 
 // Async thunks
@@ -45,38 +49,33 @@ export const fetchPortfolio = createAsyncThunk(
 
 export const createPortfolio = createAsyncThunk(
   'portfolios/createPortfolio',
-  async (portfolioData: Omit<Portfolio, 'id' | 'createdAt' | 'updatedAt'>) => {
-    // This would typically call a POST endpoint
-    // For now, we'll simulate the creation
-    const newPortfolio: Portfolio = {
-      ...portfolioData,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    return newPortfolio;
+  async (portfolioData: CreatePortfolioRequest) => {
+    const response = await apiClient.createPortfolio(portfolioData);
+    if (!response.success) {
+      throw new Error(response.error?.message || 'Failed to create portfolio');
+    }
+    return response.data;
   }
 );
 
 export const updatePortfolio = createAsyncThunk(
   'portfolios/updatePortfolio',
-  async ({ id, updates }: { id: string; updates: Partial<Portfolio> }) => {
-    // This would typically call a PUT endpoint
-    // For now, we'll simulate the update
-    const updatedPortfolio: Portfolio = {
-      ...updates,
-      id,
-      updatedAt: new Date().toISOString(),
-    } as Portfolio;
-    return updatedPortfolio;
+  async ({ id, portfolioData }: { id: string; portfolioData: CreatePortfolioRequest }) => {
+    const response = await apiClient.updatePortfolio(id, portfolioData);
+    if (!response.success) {
+      throw new Error(response.error?.message || 'Failed to update portfolio');
+    }
+    return response.data;
   }
 );
 
 export const deletePortfolio = createAsyncThunk(
   'portfolios/deletePortfolio',
   async (id: string) => {
-    // This would typically call a DELETE endpoint
-    // For now, we'll just return the ID
+    const response = await apiClient.deletePortfolio(id);
+    if (!response.success) {
+      throw new Error(response.error?.message || 'Failed to delete portfolio');
+    }
     return id;
   }
 );
@@ -91,10 +90,13 @@ const portfolioSlice = createSlice({
     clearError: (state) => {
       state.error = null;
     },
+    clearCreateError: (state) => {
+      state.createError = null;
+    },
     calculateTotals: (state) => {
       state.totalValue = state.items.reduce((total, portfolio) => {
         const portfolioValue = portfolio.assets?.reduce((assetTotal, asset) => 
-          assetTotal + asset.value, 0) || 0;
+          assetTotal + asset.dollarAmount, 0) || 0;
         return total + portfolioValue;
       }, 0);
       
@@ -134,17 +136,19 @@ const portfolioSlice = createSlice({
       })
       // Create portfolio
       .addCase(createPortfolio.pending, (state) => {
-        state.loading = true;
-        state.error = null;
+        state.createLoading = true;
+        state.createError = null;
       })
       .addCase(createPortfolio.fulfilled, (state, action) => {
-        state.loading = false;
-        state.items.push(action.payload);
-        state.error = null;
+        state.createLoading = false;
+        if (action.payload) {
+          state.items.push(action.payload);
+        }
+        state.createError = null;
       })
       .addCase(createPortfolio.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.error.message || 'Failed to create portfolio';
+        state.createLoading = false;
+        state.createError = action.error.message || 'Failed to create portfolio';
       })
       // Update portfolio
       .addCase(updatePortfolio.pending, (state) => {
@@ -153,12 +157,14 @@ const portfolioSlice = createSlice({
       })
       .addCase(updatePortfolio.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.items.findIndex(p => p.id === action.payload.id);
-        if (index !== -1) {
-          state.items[index] = action.payload;
-        }
-        if (state.selectedPortfolio?.id === action.payload.id) {
-          state.selectedPortfolio = action.payload;
+        if (action.payload) {
+          const index = state.items.findIndex(p => p.id === action.payload!.id);
+          if (index !== -1) {
+            state.items[index] = action.payload!;
+          }
+          if (state.selectedPortfolio?.id === action.payload!.id) {
+            state.selectedPortfolio = action.payload!;
+          }
         }
         state.error = null;
       })
@@ -186,5 +192,5 @@ const portfolioSlice = createSlice({
   },
 });
 
-export const { selectPortfolio, clearError, calculateTotals } = portfolioSlice.actions;
+export const { selectPortfolio, clearError, clearCreateError, calculateTotals } = portfolioSlice.actions;
 export default portfolioSlice.reducer;

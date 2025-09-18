@@ -18,13 +18,16 @@ export interface AuthTokens {
 
 // Helper function to extract serializable user data from CognitoUser
 const extractUserData = (cognitoUser: any): AuthUser => {
+  // Handle both direct user object and session-based user
+  const attributes = cognitoUser.attributes || cognitoUser.signInUserSession?.idToken?.payload || {};
+  
   return {
-    userId: cognitoUser.attributes?.sub || cognitoUser.username,
+    userId: attributes.sub || cognitoUser.username,
     username: cognitoUser.username,
-    email: cognitoUser.attributes?.email || cognitoUser.signInUserSession?.idToken?.payload?.email || cognitoUser.username,
-    name: cognitoUser.attributes?.name || cognitoUser.attributes?.given_name,
+    email: attributes.email || cognitoUser.username,
+    name: attributes.name || attributes.given_name || attributes.family_name,
     signInDetails: {
-      loginId: cognitoUser.attributes?.email || cognitoUser.username,
+      loginId: attributes.email || cognitoUser.username,
     },
   };
 };
@@ -32,11 +35,11 @@ const extractUserData = (cognitoUser: any): AuthUser => {
 export const getAuthHeaders = async (): Promise<Record<string, string>> => {
   try {
     const session = await Auth.currentSession();
-    const accessToken = session.getAccessToken().getJwtToken();
+    const idToken = session.getIdToken().getJwtToken();
     
     return {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${accessToken}`,
+      'Authorization': `Bearer ${idToken}`,
     };
   } catch (error) {
     console.warn('No valid session found, proceeding without auth headers');
@@ -51,9 +54,13 @@ export const getCurrentAuthUser = async (): Promise<AuthUser | null> => {
     const user = await Auth.currentAuthenticatedUser();
     return extractUserData(user);
   } catch (error) {
+    console.warn('No authenticated user found:', error);
     return null;
   }
 };
+
+// Alias for compatibility
+export const getCurrentUser = getCurrentAuthUser;
 
 export const isAuthenticated = async (): Promise<boolean> => {
   try {

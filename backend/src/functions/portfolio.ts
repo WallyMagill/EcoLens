@@ -1,79 +1,68 @@
 import { Portfolio } from '@econlens/shared';
 import express, { Request, Response } from 'express';
+import { PoolClient } from 'pg';
 import { getDatabaseClient } from '../database/connection';
 import { logger } from '../shared/utils/logger';
+import { authenticateToken } from '../shared/middleware/auth';
 
 const router = express.Router();
 
-// GET /api/portfolios - List all portfolios
-router.get('/', async (req: Request, res: Response) => {
-  let client;
+// GET /api/portfolios - List all portfolios (requires authentication)
+router.get('/', authenticateToken, async (req: Request, res: Response) => {
+  let client: PoolClient | undefined;
   try {
     client = await getDatabaseClient();
-
-    // For now, return mock data until we set up the database schema
-    const mockPortfolios: Portfolio[] = [
-      {
-        id: '1',
-        userId: 'user1',
-        name: 'Retirement Fund',
-        description: 'Long-term retirement portfolio',
-        totalValue: 85000,
-        currency: 'USD',
-        assets: [
-          {
-            id: 'asset1',
-            symbol: 'VTI',
-            name: 'Vanguard Total Stock Market ETF',
-            assetType: 'etf' as any,
-            assetCategory: 'us_large_cap' as any,
-            geographicRegion: 'us' as any,
-            allocationPercentage: 40,
-            dollarAmount: 34000,
-            riskRating: 6,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-          {
-            id: 'asset2',
-            symbol: 'BND',
-            name: 'Vanguard Total Bond Market ETF',
-            assetType: 'etf' as any,
-            assetCategory: 'government_bonds' as any,
-            geographicRegion: 'us' as any,
-            allocationPercentage: 30,
-            dollarAmount: 25500,
-            riskRating: 2,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          },
-        ],
-        lastAnalyzedAt: new Date(),
-        analysisCount: 5,
-        riskProfile: {
-          overallRiskScore: 5.2,
-          concentrationRisk: 4.1,
-          sectorConcentration: 60,
-          geographicRisk: 80,
-          volatilityScore: 5.5,
-          creditRisk: 2.1,
-        },
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        isPublic: false,
-      },
-    ];
+    
+    const userId = req.user!.userId; // Get authenticated user ID from JWT token
+    
+    // Get portfolios with asset counts and calculated total values
+    const result = await client.query(`
+      SELECT p.*, 
+             COUNT(pa.id)::integer as asset_count,
+             COALESCE(SUM(pa.dollar_amount), 0) as calculated_total_value
+      FROM portfolios p 
+      LEFT JOIN portfolio_assets pa ON p.id = pa.portfolio_id 
+      WHERE p.user_id = $1 
+      GROUP BY p.id 
+      ORDER BY p.created_at DESC
+    `, [userId]);
+    
+    const portfolios = result.rows.map(row => ({
+      id: row.id,
+      userId: row.user_id,
+      name: row.name,
+      description: row.description,
+      totalValue: parseFloat(row.total_value),
+      currency: row.currency,
+      lastAnalyzedAt: row.last_analyzed_at,
+      analysisCount: row.analysis_count,
+      isPublic: row.is_public,
+      shareToken: row.share_token,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+      assetCount: row.asset_count,
+      calculatedTotalValue: parseFloat(row.calculated_total_value),
+      // Default risk profile - will be calculated in future iterations
+      riskProfile: {
+        overallRiskScore: 5.0,
+        concentrationRisk: 5.0,
+        sectorConcentration: 0,
+        geographicRisk: 0,
+        volatilityScore: 5.0,
+        creditRisk: 3.0,
+      }
+    }));
 
     res.json({
       success: true,
-      data: mockPortfolios,
+      data: portfolios,
       message: 'Portfolios retrieved successfully',
     });
   } catch (error) {
-    logger.error('Error retrieving portfolios:', error);
+    logger.error('Database error:', error);
     res.status(500).json({
       success: false,
-      error: 'Internal server error',
+      error: 'Database error',
       message: 'Failed to retrieve portfolios',
     });
   } finally {
@@ -83,42 +72,21 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/portfolios/:id - Get portfolio by ID
-router.get('/:id', async (req: Request, res: Response) => {
-  let client;
+// GET /api/portfolios/:id - Get portfolio by ID (requires authentication)
+router.get('/:id', authenticateToken, async (req: Request, res: Response) => {
+  let client: PoolClient | undefined;
   try {
     client = await getDatabaseClient();
     const { id } = req.params;
+    const userId = req.user!.userId; // Get authenticated user ID from JWT token
 
-    // Mock data for now
-    const mockPortfolios: Portfolio[] = [
-      {
-        id: '1',
-        userId: 'user1',
-        name: 'Retirement Fund',
-        description: 'Long-term retirement portfolio',
-        totalValue: 85000,
-        currency: 'USD',
-        assets: [],
-        lastAnalyzedAt: new Date(),
-        analysisCount: 5,
-        riskProfile: {
-          overallRiskScore: 5.2,
-          concentrationRisk: 4.1,
-          sectorConcentration: 60,
-          geographicRisk: 80,
-          volatilityScore: 5.5,
-          creditRisk: 2.1,
-        },
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        isPublic: false,
-      },
-    ];
+    // Get portfolio details
+    const portfolioResult = await client.query(`
+      SELECT * FROM portfolios 
+      WHERE id = $1 AND user_id = $2
+    `, [id, userId]);
 
-    const portfolio = mockPortfolios.find(p => p.id === id);
-
-    if (!portfolio) {
+    if (portfolioResult.rows.length === 0) {
       return res.status(404).json({
         success: false,
         error: 'Portfolio not found',
@@ -126,16 +94,67 @@ router.get('/:id', async (req: Request, res: Response) => {
       });
     }
 
+    const portfolioRow = portfolioResult.rows[0];
+
+    // Get portfolio assets
+    const assetsResult = await client.query(`
+      SELECT * FROM portfolio_assets 
+      WHERE portfolio_id = $1 
+      ORDER BY symbol
+    `, [id]);
+
+    const assets = assetsResult.rows.map(asset => ({
+      id: asset.id,
+      symbol: asset.symbol,
+      name: asset.name,
+      assetType: asset.asset_type,
+      assetCategory: asset.asset_category,
+      sector: asset.sector,
+      geographicRegion: asset.geographic_region,
+      allocationPercentage: parseFloat(asset.allocation_percentage),
+      dollarAmount: parseFloat(asset.dollar_amount),
+      shares: asset.shares ? parseFloat(asset.shares) : undefined,
+      avgPurchasePrice: asset.avg_purchase_price ? parseFloat(asset.avg_purchase_price) : undefined,
+      riskRating: asset.risk_rating,
+      createdAt: asset.created_at,
+      updatedAt: asset.updated_at,
+    }));
+
+    const portfolio: Portfolio = {
+      id: portfolioRow.id,
+      userId: portfolioRow.user_id,
+      name: portfolioRow.name,
+      description: portfolioRow.description,
+      totalValue: parseFloat(portfolioRow.total_value),
+      currency: portfolioRow.currency,
+      assets: assets,
+      lastAnalyzedAt: portfolioRow.last_analyzed_at,
+      analysisCount: portfolioRow.analysis_count,
+      isPublic: portfolioRow.is_public,
+      shareToken: portfolioRow.share_token,
+      createdAt: portfolioRow.created_at,
+      updatedAt: portfolioRow.updated_at,
+      // Default risk profile - will be calculated in future iterations
+      riskProfile: {
+        overallRiskScore: 5.0,
+        concentrationRisk: 5.0,
+        sectorConcentration: 0,
+        geographicRisk: 0,
+        volatilityScore: 5.0,
+        creditRisk: 3.0,
+      }
+    };
+
     res.json({
       success: true,
       data: portfolio,
       message: 'Portfolio retrieved successfully',
     });
   } catch (error) {
-    logger.error('Error retrieving portfolio:', error);
+    logger.error('Database error:', error);
     res.status(500).json({
       success: false,
-      error: 'Internal server error',
+      error: 'Database error',
       message: 'Failed to retrieve portfolio',
     });
   } finally {
@@ -145,11 +164,10 @@ router.get('/:id', async (req: Request, res: Response) => {
   }
 });
 
-// POST /api/portfolios - Create new portfolio
-router.post('/', async (req: Request, res: Response) => {
-  let client;
+// POST /api/portfolios - Create new portfolio (requires authentication)
+router.post('/', authenticateToken, async (req: Request, res: Response) => {
+  let client: PoolClient | undefined;
   try {
-    client = await getDatabaseClient();
     const portfolioData = req.body;
 
     // Basic validation
@@ -161,42 +179,144 @@ router.post('/', async (req: Request, res: Response) => {
       });
     }
 
-    const newPortfolio: Portfolio = {
-      id: Math.random().toString(36).substr(2, 9),
-      userId: 'user1', // In real app, get from auth
-      name: portfolioData.name,
-      description: portfolioData.description,
-      totalValue: portfolioData.totalValue || 0,
-      currency: 'USD',
-      assets: portfolioData.assets,
-      lastAnalyzedAt: undefined,
-      analysisCount: 0,
-      riskProfile: {
-        overallRiskScore: 5,
-        concentrationRisk: 5,
-        sectorConcentration: 0,
-        geographicRisk: 0,
-        volatilityScore: 5,
-        creditRisk: 3,
-      },
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      isPublic: false,
-    };
+    // Validate allocation percentages sum to 100%
+    const totalAllocation = portfolioData.assets.reduce((sum: number, asset: any) => 
+      sum + (asset.allocationPercentage || 0), 0);
+    
+    if (Math.abs(totalAllocation - 100) > 0.01) {
+      return res.status(400).json({
+        success: false,
+        error: 'Validation error',
+        message: `Allocation percentages must sum to 100%. Current sum: ${totalAllocation}%`,
+      });
+    }
 
-    // TODO: Save to database
-    logger.info('Creating new portfolio:', newPortfolio.name);
+    client = await getDatabaseClient();
+    const userId = req.user!.userId; // Get authenticated user ID from JWT token
+    const portfolioId = Math.random().toString(36).substr(2, 9);
 
-    res.status(201).json({
-      success: true,
-      data: newPortfolio,
-      message: 'Portfolio created successfully',
-    });
+    // Start transaction
+    await client.query('BEGIN');
+
+    try {
+      // Insert portfolio
+      const portfolioResult = await client.query(`
+        INSERT INTO portfolios (id, user_id, name, description, total_value, currency) 
+        VALUES ($1, $2, $3, $4, $5, $6) 
+        RETURNING *
+      `, [
+        portfolioId,
+        userId,
+        portfolioData.name,
+        portfolioData.description || null,
+        portfolioData.totalValue || 0,
+        'USD'
+      ]);
+
+      const portfolioRow = portfolioResult.rows[0];
+
+      // Insert assets
+      const assetPromises = portfolioData.assets.map((asset: any, index: number) => {
+        const assetId = `${portfolioId}_asset_${index}`;
+        return client!.query(`
+          INSERT INTO portfolio_assets (
+            id, portfolio_id, symbol, name, asset_type, asset_category, 
+            sector, geographic_region, allocation_percentage, dollar_amount, 
+            shares, avg_purchase_price, risk_rating
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        `, [
+          assetId,
+          portfolioId,
+          asset.symbol,
+          asset.name,
+          asset.assetType || 'stock',
+          asset.assetCategory || null,
+          asset.sector || null,
+          asset.geographicRegion || null,
+          asset.allocationPercentage,
+          asset.dollarAmount,
+          asset.shares || null,
+          asset.avgPurchasePrice || null,
+          asset.riskRating || 5
+        ]);
+      });
+
+      await Promise.all(assetPromises);
+
+      // Commit transaction
+      await client.query('COMMIT');
+
+      // Get the created portfolio with assets
+      const createdPortfolio = await client.query(`
+        SELECT p.*, 
+               json_agg(
+                 json_build_object(
+                   'id', pa.id,
+                   'symbol', pa.symbol,
+                   'name', pa.name,
+                   'assetType', pa.asset_type,
+                   'assetCategory', pa.asset_category,
+                   'sector', pa.sector,
+                   'geographicRegion', pa.geographic_region,
+                   'allocationPercentage', pa.allocation_percentage,
+                   'dollarAmount', pa.dollar_amount,
+                   'shares', pa.shares,
+                   'avgPurchasePrice', pa.avg_purchase_price,
+                   'riskRating', pa.risk_rating,
+                   'createdAt', pa.created_at,
+                   'updatedAt', pa.updated_at
+                 )
+               ) FILTER (WHERE pa.id IS NOT NULL) as assets
+        FROM portfolios p
+        LEFT JOIN portfolio_assets pa ON p.id = pa.portfolio_id
+        WHERE p.id = $1
+        GROUP BY p.id
+      `, [portfolioId]);
+
+      const portfolio = createdPortfolio.rows[0];
+      
+      const newPortfolio: Portfolio = {
+        id: portfolio.id,
+        userId: portfolio.user_id,
+        name: portfolio.name,
+        description: portfolio.description,
+        totalValue: parseFloat(portfolio.total_value),
+        currency: portfolio.currency,
+        assets: portfolio.assets || [],
+        lastAnalyzedAt: portfolio.last_analyzed_at,
+        analysisCount: portfolio.analysis_count,
+        isPublic: portfolio.is_public,
+        shareToken: portfolio.share_token,
+        createdAt: portfolio.created_at,
+        updatedAt: portfolio.updated_at,
+        riskProfile: {
+          overallRiskScore: 5.0,
+          concentrationRisk: 5.0,
+          sectorConcentration: 0,
+          geographicRisk: 0,
+          volatilityScore: 5.0,
+          creditRisk: 3.0,
+        }
+      };
+
+      logger.info('Portfolio created successfully:', newPortfolio.name);
+
+      res.status(201).json({
+        success: true,
+        data: newPortfolio,
+        message: 'Portfolio created successfully',
+      });
+
+    } catch (error) {
+      // Rollback transaction on error
+      await client.query('ROLLBACK');
+      throw error;
+    }
   } catch (error) {
-    logger.error('Error creating portfolio:', error);
+    logger.error('Database error:', error);
     res.status(500).json({
       success: false,
-      error: 'Internal server error',
+      error: 'Database error',
       message: 'Failed to create portfolio',
     });
   } finally {
@@ -206,25 +326,180 @@ router.post('/', async (req: Request, res: Response) => {
   }
 });
 
-// PUT /api/portfolios/:id - Update portfolio
-router.put('/:id', async (req: Request, res: Response) => {
-  let client;
+// PUT /api/portfolios/:id - Update portfolio (requires authentication)
+router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
+  let client: PoolClient | undefined;
   try {
-    client = await getDatabaseClient();
     const { id } = req.params;
+    const portfolioData = req.body;
+    const userId = req.user!.userId; // Get authenticated user ID from JWT token
 
-    // TODO: Update in database
-    logger.info('Updating portfolio:', id);
+    // Basic validation
+    if (!portfolioData.name) {
+      return res.status(400).json({
+        success: false,
+        error: 'Validation error',
+        message: 'Portfolio name is required',
+      });
+    }
 
-    res.json({
-      success: true,
-      message: 'Portfolio updated successfully',
-    });
+    // Validate allocation percentages if assets are provided
+    if (portfolioData.assets) {
+      const totalAllocation = portfolioData.assets.reduce((sum: number, asset: any) => 
+        sum + (asset.allocationPercentage || 0), 0);
+      
+      if (Math.abs(totalAllocation - 100) > 0.01) {
+        return res.status(400).json({
+          success: false,
+          error: 'Validation error',
+          message: `Allocation percentages must sum to 100%. Current sum: ${totalAllocation}%`,
+        });
+      }
+    }
+
+    client = await getDatabaseClient();
+
+    // Check if portfolio exists and belongs to user
+    const existingPortfolio = await client.query(`
+      SELECT id FROM portfolios WHERE id = $1 AND user_id = $2
+    `, [id, userId]);
+
+    if (existingPortfolio.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Portfolio not found',
+        message: `Portfolio with ID ${id} not found`,
+      });
+    }
+
+    // Start transaction
+    await client.query('BEGIN');
+
+    try {
+      // Update portfolio
+      const portfolioResult = await client.query(`
+        UPDATE portfolios 
+        SET name = $1, description = $2, total_value = $3, updated_at = CURRENT_TIMESTAMP 
+        WHERE id = $4 AND user_id = $5 
+        RETURNING *
+      `, [
+        portfolioData.name,
+        portfolioData.description || null,
+        portfolioData.totalValue || 0,
+        id,
+        userId
+      ]);
+
+      // If assets are provided, update them
+      if (portfolioData.assets) {
+        // Delete existing assets
+        await client.query(`
+          DELETE FROM portfolio_assets WHERE portfolio_id = $1
+        `, [id]);
+
+        // Insert new assets
+        const assetPromises = portfolioData.assets.map((asset: any, index: number) => {
+          const assetId = `${id}_asset_${index}`;
+          return client!.query(`
+            INSERT INTO portfolio_assets (
+              id, portfolio_id, symbol, name, asset_type, asset_category, 
+              sector, geographic_region, allocation_percentage, dollar_amount, 
+              shares, avg_purchase_price, risk_rating
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+          `, [
+            assetId,
+            id,
+            asset.symbol,
+            asset.name,
+            asset.assetType || 'stock',
+            asset.assetCategory || null,
+            asset.sector || null,
+            asset.geographicRegion || null,
+            asset.allocationPercentage,
+            asset.dollarAmount,
+            asset.shares || null,
+            asset.avgPurchasePrice || null,
+            asset.riskRating || 5
+          ]);
+        });
+
+        await Promise.all(assetPromises);
+      }
+
+      // Commit transaction
+      await client.query('COMMIT');
+
+      // Get the updated portfolio with assets
+      const updatedPortfolio = await client.query(`
+        SELECT p.*, 
+               json_agg(
+                 json_build_object(
+                   'id', pa.id,
+                   'symbol', pa.symbol,
+                   'name', pa.name,
+                   'assetType', pa.asset_type,
+                   'assetCategory', pa.asset_category,
+                   'sector', pa.sector,
+                   'geographicRegion', pa.geographic_region,
+                   'allocationPercentage', pa.allocation_percentage,
+                   'dollarAmount', pa.dollar_amount,
+                   'shares', pa.shares,
+                   'avgPurchasePrice', pa.avg_purchase_price,
+                   'riskRating', pa.risk_rating,
+                   'createdAt', pa.created_at,
+                   'updatedAt', pa.updated_at
+                 )
+               ) FILTER (WHERE pa.id IS NOT NULL) as assets
+        FROM portfolios p
+        LEFT JOIN portfolio_assets pa ON p.id = pa.portfolio_id
+        WHERE p.id = $1
+        GROUP BY p.id
+      `, [id]);
+
+      const portfolio = updatedPortfolio.rows[0];
+      
+      const updatedPortfolioData: Portfolio = {
+        id: portfolio.id,
+        userId: portfolio.user_id,
+        name: portfolio.name,
+        description: portfolio.description,
+        totalValue: parseFloat(portfolio.total_value),
+        currency: portfolio.currency,
+        assets: portfolio.assets || [],
+        lastAnalyzedAt: portfolio.last_analyzed_at,
+        analysisCount: portfolio.analysis_count,
+        isPublic: portfolio.is_public,
+        shareToken: portfolio.share_token,
+        createdAt: portfolio.created_at,
+        updatedAt: portfolio.updated_at,
+        riskProfile: {
+          overallRiskScore: 5.0,
+          concentrationRisk: 5.0,
+          sectorConcentration: 0,
+          geographicRisk: 0,
+          volatilityScore: 5.0,
+          creditRisk: 3.0,
+        }
+      };
+
+      logger.info('Portfolio updated successfully:', id);
+
+      res.json({
+        success: true,
+        data: updatedPortfolioData,
+        message: 'Portfolio updated successfully',
+      });
+
+    } catch (error) {
+      // Rollback transaction on error
+      await client.query('ROLLBACK');
+      throw error;
+    }
   } catch (error) {
-    logger.error('Error updating portfolio:', error);
+    logger.error('Database error:', error);
     res.status(500).json({
       success: false,
-      error: 'Internal server error',
+      error: 'Database error',
       message: 'Failed to update portfolio',
     });
   } finally {
@@ -234,25 +509,54 @@ router.put('/:id', async (req: Request, res: Response) => {
   }
 });
 
-// DELETE /api/portfolios/:id - Delete portfolio
-router.delete('/:id', async (req: Request, res: Response) => {
-  let client;
+// DELETE /api/portfolios/:id - Delete portfolio (requires authentication)
+router.delete('/:id', authenticateToken, async (req: Request, res: Response) => {
+  let client: PoolClient | undefined;
   try {
-    client = await getDatabaseClient();
     const { id } = req.params;
+    const userId = req.user!.userId; // Get authenticated user ID from JWT token
 
-    // TODO: Delete from database
-    logger.info('Deleting portfolio:', id);
+    client = await getDatabaseClient();
+
+    // Check if portfolio exists and belongs to user
+    const existingPortfolio = await client.query(`
+      SELECT id, name FROM portfolios WHERE id = $1 AND user_id = $2
+    `, [id, userId]);
+
+    if (existingPortfolio.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Portfolio not found',
+        message: `Portfolio with ID ${id} not found`,
+      });
+    }
+
+    const portfolioName = existingPortfolio.rows[0].name;
+
+    // Delete portfolio (portfolio_assets will be cascade deleted automatically)
+    const result = await client.query(`
+      DELETE FROM portfolios WHERE id = $1 AND user_id = $2 RETURNING *
+    `, [id, userId]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Portfolio not found',
+        message: `Portfolio with ID ${id} not found`,
+      });
+    }
+
+    logger.info('Portfolio deleted successfully:', portfolioName);
 
     res.json({
       success: true,
       message: 'Portfolio deleted successfully',
     });
   } catch (error) {
-    logger.error('Error deleting portfolio:', error);
+    logger.error('Database error:', error);
     res.status(500).json({
       success: false,
-      error: 'Internal server error',
+      error: 'Database error',
       message: 'Failed to delete portfolio',
     });
   } finally {
