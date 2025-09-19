@@ -98,9 +98,9 @@ const portfolioSlice = createSlice({
       state.totalValue = state.items.reduce((total, portfolio) => 
         total + (portfolio.totalValue || 0), 0);
       
-      // Calculate total assets count
+      // Calculate total assets count using assetCount field from backend
       state.totalAssets = state.items.reduce((total, portfolio) => 
-        total + (portfolio.assets?.length || 0), 0);
+        total + (portfolio.assetCount || portfolio.assets?.length || 0), 0);
     },
   },
   extraReducers: (builder) => {

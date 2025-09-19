@@ -13,6 +13,7 @@ export interface Portfolio {
   totalValue: number;
   currency: string;
   assets?: PortfolioAsset[];
+  assetCount?: number;
   lastAnalyzedAt?: string;
   analysisCount: number;
   riskProfile?: RiskProfile;

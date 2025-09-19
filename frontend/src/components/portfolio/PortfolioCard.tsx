@@ -17,7 +17,7 @@ const PortfolioCard: React.FC<PortfolioCardProps> = ({
   onDelete 
 }) => {
   const totalValue = portfolio.totalValue || 0;
-  const assetCount = portfolio.assets?.length || 0;
+  const assetCount = portfolio.assetCount || portfolio.assets?.length || 0;
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
