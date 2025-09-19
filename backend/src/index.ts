@@ -24,6 +24,9 @@ const getCorsOrigins = (): string[] => {
     // CloudFront distribution
     'https://dquykpffn9qx.cloudfront.net',
     
+    // S3 website URL for production frontend
+    'http://econlens-frontend-prod.s3-website-us-east-1.amazonaws.com',
+    
     // Legacy frontend URL (fallback)
     process.env.FRONTEND_URL || 'http://44.203.253.29:3000'
   ];

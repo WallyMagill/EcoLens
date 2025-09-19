@@ -52,6 +52,13 @@ The frontend is configured to connect to:
 - **CORS**: Already configured for frontend origins
 - **Timeout**: 10 seconds per request
 
+## Production Deployment
+
+The application is deployed as an HTTP-only S3 website to avoid mixed content issues:
+- **Frontend URL**: `http://econlens-frontend-prod.s3-website-us-east-1.amazonaws.com/`
+- **API Test URL**: `http://econlens-frontend-prod.s3-website-us-east-1.amazonaws.com/api-test`
+- **Protocol**: HTTP (no HTTPS to avoid mixed content errors with ALB)
+
 ## Getting Started
 
 ### Prerequisites
