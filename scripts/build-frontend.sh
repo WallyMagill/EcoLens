@@ -91,7 +91,7 @@ npm run type-check || {
 
 # Build for production
 log_info "Building React application for production..."
-REACT_APP_BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ) npm run build:prod
+VITE_BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ) npm run build:prod
 
 if [ ! -d "build" ]; then
     log_error "Build failed - build directory not created"

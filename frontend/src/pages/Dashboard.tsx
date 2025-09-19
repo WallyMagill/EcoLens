@@ -13,7 +13,7 @@ import { fetchScenarios } from '../store/scenarioSlice';
 const Dashboard: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const { items: portfolios, loading: portfoliosLoading, error: portfoliosError } = useSelector((state: RootState) => state.portfolios);
+  const { items: portfolios, loading: portfoliosLoading, error: portfoliosError, totalValue, totalAssets } = useSelector((state: RootState) => state.portfolios);
   const { availableScenarios: scenarios, loading: scenariosLoading, error: scenariosError } = useSelector((state: RootState) => state.scenarios);
 
   useEffect(() => {
@@ -156,9 +156,7 @@ const Dashboard: React.FC = () => {
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">Total Assets</dt>
                   <dd className="text-lg font-medium text-gray-900">
-                    {safePortfolios.reduce((total, portfolio) => 
-                      total + (portfolio.assets?.length || 0), 0
-                    )}
+                    {totalAssets}
                   </dd>
                 </dl>
               </div>
@@ -180,11 +178,7 @@ const Dashboard: React.FC = () => {
                 <dl>
                   <dt className="text-sm font-medium text-gray-500 truncate">Total Value</dt>
                   <dd className="text-lg font-medium text-gray-900">
-                    {formatCurrency(
-                      safePortfolios.reduce((total, portfolio) => 
-                        total + (portfolio.totalValue || 0), 0
-                      )
-                    )}
+                    {formatCurrency(totalValue)}
                   </dd>
                 </dl>
               </div>

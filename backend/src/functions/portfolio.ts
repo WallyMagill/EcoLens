@@ -2,8 +2,8 @@ import { Portfolio } from '@econlens/shared';
 import express, { Request, Response } from 'express';
 import { PoolClient } from 'pg';
 import { getDatabaseClient } from '../database/connection';
-import { logger } from '../shared/utils/logger';
 import { authenticateToken } from '../shared/middleware/auth';
+import { logger } from '../shared/utils/logger';
 
 const router = express.Router();
 
@@ -15,43 +15,71 @@ router.get('/', authenticateToken, async (req: Request, res: Response) => {
     
     const userId = req.user!.userId; // Get authenticated user ID from JWT token
     
-    // Get portfolios with asset counts and calculated total values
-    const result = await client.query(`
-      SELECT p.*, 
-             COUNT(pa.id)::integer as asset_count,
-             COALESCE(SUM(pa.dollar_amount), 0) as calculated_total_value
+    // Get portfolios with their assets for proper calculation
+    const portfoliosResult = await client.query(`
+      SELECT p.* 
       FROM portfolios p 
-      LEFT JOIN portfolio_assets pa ON p.id = pa.portfolio_id 
       WHERE p.user_id = $1 
-      GROUP BY p.id 
       ORDER BY p.created_at DESC
     `, [userId]);
     
-    const portfolios = result.rows.map(row => ({
-      id: row.id,
-      userId: row.user_id,
-      name: row.name,
-      description: row.description,
-      totalValue: parseFloat(row.total_value),
-      currency: row.currency,
-      lastAnalyzedAt: row.last_analyzed_at,
-      analysisCount: row.analysis_count,
-      isPublic: row.is_public,
-      shareToken: row.share_token,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-      assetCount: row.asset_count,
-      calculatedTotalValue: parseFloat(row.calculated_total_value),
-      // Default risk profile - will be calculated in future iterations
-      riskProfile: {
-        overallRiskScore: 5.0,
-        concentrationRisk: 5.0,
-        sectorConcentration: 0,
-        geographicRisk: 0,
-        volatilityScore: 5.0,
-        creditRisk: 3.0,
-      }
-    }));
+    const portfolios = [];
+    
+    for (const portfolioRow of portfoliosResult.rows) {
+      // Get assets for each portfolio
+      const assetsResult = await client.query(`
+        SELECT * FROM portfolio_assets 
+        WHERE portfolio_id = $1 
+        ORDER BY symbol
+      `, [portfolioRow.id]);
+
+      const assets = assetsResult.rows.map(asset => ({
+        id: asset.id,
+        symbol: asset.symbol,
+        name: asset.name,
+        assetType: asset.asset_type,
+        assetCategory: asset.asset_category,
+        allocationPercentage: parseFloat(asset.allocation_percentage),
+        dollarAmount: parseFloat(asset.dollar_amount),
+        shares: asset.shares ? parseFloat(asset.shares) : undefined,
+        avgPurchasePrice: asset.avg_purchase_price ? parseFloat(asset.avg_purchase_price) : undefined,
+        sector: asset.sector,
+        geographicRegion: asset.geographic_region,
+        riskRating: asset.risk_rating,
+        createdAt: asset.created_at,
+        updatedAt: asset.updated_at
+      }));
+
+      // Calculate total value from assets
+      const calculatedTotalValue = assets.reduce((sum, asset) => sum + asset.dollarAmount, 0);
+      
+      portfolios.push({
+        id: portfolioRow.id,
+        userId: portfolioRow.user_id,
+        name: portfolioRow.name,
+        description: portfolioRow.description,
+        // Use calculated total value from actual asset data
+        totalValue: calculatedTotalValue || parseFloat(portfolioRow.total_value),
+        currency: portfolioRow.currency,
+        lastAnalyzedAt: portfolioRow.last_analyzed_at,
+        analysisCount: portfolioRow.analysis_count,
+        isPublic: portfolioRow.is_public,
+        shareToken: portfolioRow.share_token,
+        createdAt: portfolioRow.created_at,
+        updatedAt: portfolioRow.updated_at,
+        // Include actual assets for frontend calculations
+        assets: assets,
+        // Default risk profile - will be calculated in future iterations
+        riskProfile: {
+          overallRiskScore: 5.0,
+          concentrationRisk: 5.0,
+          sectorConcentration: 0,
+          geographicRisk: 0,
+          volatilityScore: 5.0,
+          creditRisk: 3.0,
+        }
+      });
+    }
 
     res.json({
       success: true,

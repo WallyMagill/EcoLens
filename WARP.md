@@ -4,9 +4,10 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 
 ## Project Overview
 
-EcoLens is a serverless portfolio analysis application that helps investors understand how their investments might perform under different economic scenarios using AI-powered insights. Built with AWS serverless architecture, it demonstrates production-ready cloud development patterns.
+EcoLens is a portfolio analysis application that helps investors understand how their investments might perform under different economic scenarios using AI-powered insights. Currently implemented with Stage 1 architecture (VPC, EC2, RDS, S3, Cognito) and progressing toward full serverless implementation.
 
-**Tech Stack**: AWS Lambda, API Gateway, RDS PostgreSQL, AWS Bedrock (Claude AI), React TypeScript, CDK Infrastructure as Code
+**Current Tech Stack**: AWS VPC, EC2, RDS PostgreSQL, S3, Cognito, React TypeScript with Vite, CDK Infrastructure as Code
+**Future Tech Stack**: AWS Lambda, API Gateway, AWS Bedrock (Claude AI), serverless architecture
 
 ## Development Commands
 
@@ -196,10 +197,10 @@ aws s3 ls --profile econlens-admin
 ### Multi-Stage Development Approach
 EcoLens follows a 4-stage development progression from traditional AWS services to full serverless:
 
-1. **Stage 1 (Foundation)**: VPC, EC2, RDS, S3, Cognito - Traditional AWS architecture
-2. **Stage 2 (Serverless Migration)**: API Gateway + Lambda, file processing
-3. **Stage 3 (AI Integration)**: AWS Bedrock, SQS, ElastiCache for AI scenarios
-4. **Stage 4 (Production Ready)**: Full CDK automation, CI/CD, monitoring
+1. **Stage 1 (Foundation) - ✅ COMPLETED**: VPC, EC2, RDS, S3, Cognito - Traditional AWS architecture
+2. **Stage 2 (Serverless Migration) - 🔄 NEXT**: API Gateway + Lambda, file processing
+3. **Stage 3 (AI Integration) - 📋 PLANNED**: AWS Bedrock, SQS, ElastiCache for AI scenarios
+4. **Stage 4 (Production Ready) - 📋 PLANNED**: Full CDK automation, CI/CD, monitoring
 
 ### Core Data Architecture
 - **Portfolio Assets**: Support for stocks, ETFs, mutual funds, bonds, REITs, commodities
@@ -209,12 +210,22 @@ EcoLens follows a 4-stage development progression from traditional AWS services 
 - **Data Storage**: PostgreSQL with well-defined schema for portfolios and analysis
 
 ### Key Services Integration
-- **Frontend**: React TypeScript with Redux Toolkit, hosted on S3 + CloudFront
-- **API Layer**: Express.js on Lambda with API Gateway
+
+**Current Implementation (Stage 1):**
+- **Frontend**: React TypeScript with Vite, deployed to S3 static website hosting
+- **API Layer**: Express.js on EC2 with Node.js
 - **Database**: PostgreSQL on RDS with connection pooling
+- **Authentication**: AWS Cognito User Pool with JWT tokens
+- **File Storage**: S3 for static assets and future CSV uploads
+- **Infrastructure**: CDK for Infrastructure as Code
+
+**Future Implementation (Stages 2-4):**
+- **API Layer**: Express.js on Lambda with API Gateway
 - **AI Processing**: AWS Bedrock for economic scenario analysis
-- **File Processing**: S3 for CSV uploads, Lambda for processing
+- **File Processing**: Lambda for CSV processing
+- **Caching**: ElastiCache for performance optimization
 - **Monitoring**: CloudWatch for logs and metrics
+- **CI/CD**: Automated deployment pipelines
 
 ### Security & Compliance
 - VPC with proper subnet segregation (public/private)

@@ -9,9 +9,9 @@ set -e  # Exit on any error
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 
-# EC2 Configuration
-EC2_HOST="44.203.253.29"
-EC2_USER="ec2-user"
+# EC2 Configuration (can be overridden with environment variables)
+EC2_HOST="${EC2_HOST:-44.203.253.29}"  # Default to current instance, but allow override
+EC2_USER="${EC2_USER:-ec2-user}"
 EC2_BACKEND_DIR="~/econlens/backend"
 
 # AWS Resources (from user specification)

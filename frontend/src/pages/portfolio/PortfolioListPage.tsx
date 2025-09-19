@@ -14,7 +14,7 @@ import type { Portfolio } from '../../types/api';
 const PortfolioListPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const { items: portfolios, loading, error } = useSelector((state: RootState) => state.portfolios);
+  const { items: portfolios, loading, error, totalValue: reduxTotalValue, totalAssets: reduxTotalAssets } = useSelector((state: RootState) => state.portfolios);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [portfolioToDelete, setPortfolioToDelete] = useState<Portfolio | null>(null);
 
@@ -78,8 +78,9 @@ const PortfolioListPage: React.FC = () => {
     }).format(amount);
   };
 
-  const totalValue = portfolios.reduce((sum, portfolio) => sum + (portfolio.totalValue || 0), 0);
-  const totalAssets = portfolios.reduce((sum, portfolio) => sum + (portfolio.assets?.length || 0), 0);
+  // Use calculated totals from Redux state
+  const totalValue = reduxTotalValue;
+  const totalAssets = reduxTotalAssets;
 
   if (loading && portfolios.length === 0) {
     return (

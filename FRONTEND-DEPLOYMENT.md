@@ -1,32 +1,32 @@
 # EconLens Frontend Deployment Guide
 
-This guide covers the deployment of the EconLens React frontend with proper environment configuration and CORS handling.
+This guide covers the deployment of the EconLens React frontend to AWS S3 with CloudFront distribution, proper environment configuration, and CORS handling for Stage 1 completion.
 
 ## Environment Configuration
 
 ### Production Environment (`.env.production`)
 ```bash
-# API Configuration
-REACT_APP_API_URL=https://44.203.253.29/api
-REACT_APP_API_BASE_URL=https://44.203.253.29
+# API Configuration - Update with your actual backend URLs
+VITE_API_URL=https://your-backend-domain.com/api
+VITE_API_BASE_URL=https://your-backend-domain.com
 
 # AWS Configuration
-REACT_APP_AWS_REGION=us-east-1
+VITE_AWS_REGION=us-east-1
 
-# Cognito Configuration
-REACT_APP_COGNITO_USER_POOL_ID=us-east-1_f9G2iTorZ
-REACT_APP_COGNITO_USER_POOL_CLIENT_ID=6dv1d5mtjpem1orfjfj5r4k3fg
+# Cognito Configuration - Update with your actual Cognito User Pool
+VITE_COGNITO_USER_POOL_ID=your-user-pool-id
+VITE_COGNITO_USER_POOL_CLIENT_ID=your-client-id
 
 # Application Configuration
-REACT_APP_ENVIRONMENT=production
-REACT_APP_VERSION=0.1.0
+VITE_ENVIRONMENT=production
+VITE_APP_VERSION=1.0.0
 
 # Feature Flags
-REACT_APP_ENABLE_ANALYTICS=true
-REACT_APP_ENABLE_ERROR_REPORTING=true
+VITE_ENABLE_ANALYTICS=true
+VITE_ENABLE_ERROR_REPORTING=true
 
-# CORS Configuration
-REACT_APP_CORS_ORIGIN=https://44.203.253.29
+# CORS Configuration - Update with your actual backend domain
+VITE_CORS_ORIGIN=https://your-backend-domain.com
 
 # Build Configuration
 GENERATE_SOURCEMAP=false
@@ -36,30 +36,30 @@ REACT_APP_BUILD_TIME=__BUILD_TIME__
 ### Development Environment (`.env.development`)
 ```bash
 # API Configuration
-REACT_APP_API_URL=http://localhost:3001/api
-REACT_APP_API_BASE_URL=http://localhost:3001
+VITE_API_URL=http://localhost:3001/api
+VITE_API_BASE_URL=http://localhost:3001
 
 # AWS Configuration
-REACT_APP_AWS_REGION=us-east-1
+VITE_AWS_REGION=us-east-1
 
-# Cognito Configuration
-REACT_APP_COGNITO_USER_POOL_ID=us-east-1_f9G2iTorZ
-REACT_APP_COGNITO_USER_POOL_CLIENT_ID=6dv1d5mtjpem1orfjfj5r4k3fg
+# Cognito Configuration - Update with your actual Cognito User Pool
+VITE_COGNITO_USER_POOL_ID=your-user-pool-id
+VITE_COGNITO_USER_POOL_CLIENT_ID=your-client-id
 
 # Application Configuration
-REACT_APP_ENVIRONMENT=development
-REACT_APP_VERSION=0.1.0
+VITE_ENVIRONMENT=development
+VITE_APP_VERSION=1.0.0
 
 # Feature Flags
-REACT_APP_ENABLE_ANALYTICS=false
-REACT_APP_ENABLE_ERROR_REPORTING=false
+VITE_ENABLE_ANALYTICS=false
+VITE_ENABLE_ERROR_REPORTING=false
 
 # CORS Configuration
-REACT_APP_CORS_ORIGIN=http://localhost:3001
+VITE_CORS_ORIGIN=http://localhost:3001
 
 # Build Configuration
 GENERATE_SOURCEMAP=true
-REACT_APP_BUILD_TIME=__BUILD_TIME__
+VITE_BUILD_TIME=__BUILD_TIME__
 ```
 
 ## Build Process
@@ -72,14 +72,84 @@ REACT_APP_BUILD_TIME=__BUILD_TIME__
 # Or manually
 cd frontend
 npm ci
-REACT_APP_BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ) npm run build:prod
+VITE_BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ) npm run build
 ```
 
 ### 2. Build for Development
 ```bash
 cd frontend
 npm ci
-REACT_APP_BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ) npm run build:dev
+VITE_BUILD_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ) npm run build
+```
+
+## S3 + CloudFront Deployment
+
+### 1. Create S3 Bucket for Static Website Hosting
+```bash
+# Create S3 bucket (replace with your unique bucket name)
+aws s3 mb s3://your-econlens-frontend-bucket --region us-east-1
+
+# Enable static website hosting
+aws s3 website s3://your-econlens-frontend-bucket --index-document index.html --error-document index.html
+
+# Set bucket policy for public read access
+aws s3api put-bucket-policy --bucket your-econlens-frontend-bucket --policy '{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "PublicReadGetObject",
+      "Effect": "Allow",
+      "Principal": "*",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::your-econlens-frontend-bucket/*"
+    }
+  ]
+}'
+```
+
+### 2. Deploy Built Files to S3
+```bash
+# Build and deploy
+cd frontend
+npm run build
+aws s3 sync dist/ s3://your-econlens-frontend-bucket --delete
+
+# Set proper content types for SPA routing
+aws s3 cp s3://your-econlens-frontend-bucket/index.html s3://your-econlens-frontend-bucket/index.html --metadata-directive REPLACE --content-type "text/html"
+```
+
+### 3. Create CloudFront Distribution (Optional)
+```bash
+# Create CloudFront distribution for CDN and custom domain
+aws cloudfront create-distribution --distribution-config '{
+  "CallerReference": "econlens-frontend-'$(date +%s)'",
+  "DefaultRootObject": "index.html",
+  "Origins": {
+    "Quantity": 1,
+    "Items": [
+      {
+        "Id": "S3-your-econlens-frontend-bucket",
+        "DomainName": "your-econlens-frontend-bucket.s3-website-us-east-1.amazonaws.com",
+        "CustomOriginConfig": {
+          "HTTPPort": 80,
+          "HTTPSPort": 443,
+          "OriginProtocolPolicy": "http-only"
+        }
+      }
+    ]
+  },
+  "DefaultCacheBehavior": {
+    "TargetOriginId": "S3-your-econlens-frontend-bucket",
+    "ViewerProtocolPolicy": "redirect-to-https",
+    "MinTTL": 0,
+    "ForwardedValues": {
+      "QueryString": false,
+      "Cookies": {"Forward": "none"}
+    }
+  },
+  "Comment": "EconLens Frontend Distribution",
+  "Enabled": true
+}'
 ```
 
 ## Configuration Files

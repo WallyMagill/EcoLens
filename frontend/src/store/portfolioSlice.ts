@@ -94,12 +94,11 @@ const portfolioSlice = createSlice({
       state.createError = null;
     },
     calculateTotals: (state) => {
-      state.totalValue = state.items.reduce((total, portfolio) => {
-        const portfolioValue = portfolio.assets?.reduce((assetTotal, asset) => 
-          assetTotal + asset.dollarAmount, 0) || 0;
-        return total + portfolioValue;
-      }, 0);
+      // Calculate total value from portfolio.totalValue (which is now properly calculated from backend)
+      state.totalValue = state.items.reduce((total, portfolio) => 
+        total + (portfolio.totalValue || 0), 0);
       
+      // Calculate total assets count
       state.totalAssets = state.items.reduce((total, portfolio) => 
         total + (portfolio.assets?.length || 0), 0);
     },
@@ -115,6 +114,8 @@ const portfolioSlice = createSlice({
         state.loading = false;
         state.items = action.payload;
         state.error = null;
+        // Recalculate totals after fetching portfolios
+        portfolioSlice.caseReducers.calculateTotals(state);
       })
       .addCase(fetchPortfolios.rejected, (state, action) => {
         state.loading = false;
@@ -145,6 +146,8 @@ const portfolioSlice = createSlice({
           state.items.push(action.payload);
         }
         state.createError = null;
+        // Recalculate totals after creating portfolio
+        portfolioSlice.caseReducers.calculateTotals(state);
       })
       .addCase(createPortfolio.rejected, (state, action) => {
         state.createLoading = false;
@@ -167,6 +170,8 @@ const portfolioSlice = createSlice({
           }
         }
         state.error = null;
+        // Recalculate totals after updating portfolio
+        portfolioSlice.caseReducers.calculateTotals(state);
       })
       .addCase(updatePortfolio.rejected, (state, action) => {
         state.loading = false;
@@ -184,6 +189,8 @@ const portfolioSlice = createSlice({
           state.selectedPortfolio = null;
         }
         state.error = null;
+        // Recalculate totals after deleting portfolio
+        portfolioSlice.caseReducers.calculateTotals(state);
       })
       .addCase(deletePortfolio.rejected, (state, action) => {
         state.loading = false;
