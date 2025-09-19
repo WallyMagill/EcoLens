@@ -43,8 +43,8 @@ app.use(
 
 ### 🚀 **What This Enables:**
 
-1. **Local Development**: Frontend running on `http://localhost:3000` can now make API calls to `http://44.203.253.29:3001`
-2. **Production Frontend**: EC2 frontend at `http://44.203.253.29:3000` continues to work
+1. **Local Development**: Frontend running on `http://localhost:3000` can now make API calls to `https://44.203.253.29`
+2. **Production Frontend**: EC2 frontend continues to work with secure HTTPS backend
 3. **Security**: Unauthorized origins are properly blocked
 4. **Flexibility**: Multiple development environments supported
 
@@ -54,7 +54,7 @@ Your React frontend can now be configured to make API calls to the backend:
 
 ```javascript
 // In your frontend configuration
-const API_BASE_URL = 'http://44.203.253.29:3001';
+const API_BASE_URL = 'https://44.203.253.29';
 
 // Example API call with Cognito JWT
 const response = await fetch(`${API_BASE_URL}/api/portfolios`, {
@@ -70,7 +70,7 @@ const response = await fetch(`${API_BASE_URL}/api/portfolios`, {
 ### 🔒 **Authentication Flow:**
 
 1. **Frontend** (localhost:3000) → **Cognito** → Get JWT token
-2. **Frontend** → **Backend** (44.203.253.29:3001) with `Authorization: Bearer <JWT>`
+2. **Frontend** → **Backend** (https://44.203.253.29) with `Authorization: Bearer <JWT>`
 3. **Backend** validates JWT with Cognito User Pool `us-east-1_f9G2iTorZ`
 4. **Backend** extracts user ID from JWT `sub` claim for database operations
 5. **Backend** returns user-specific data with proper CORS headers
@@ -79,7 +79,7 @@ const response = await fetch(`${API_BASE_URL}/api/portfolios`, {
 
 1. Start your React frontend on `http://localhost:3000`
 2. Configure it to authenticate with AWS Cognito
-3. Make API calls to `http://44.203.253.29:3001/api/*` with JWT tokens
+3. Make API calls to `https://44.203.253.29/api/*` with JWT tokens
 4. Enjoy seamless local development with proper user isolation!
 
 ---

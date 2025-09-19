@@ -234,6 +234,7 @@ interface PortfolioEditFormProps {
     currency: string;
   };
   initialAssets: Omit<PortfolioAsset, 'id'>[];
+  // eslint-disable-next-line no-unused-vars
   onSuccess: (data: CreatePortfolioRequest) => void;
   onCancel: () => void;
   isSubmitting: boolean;

@@ -238,7 +238,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               © 2024 {APP_NAME}. Portfolio Analysis Platform.
             </div>
             <div className="mt-2 md:mt-0 text-sm text-gray-500">
-              Backend: http://44.203.253.29:3001
+              Backend: http://EconLe-EconL-rZpK4Z8Snovx-624635801.us-east-1.elb.amazonaws.com
             </div>
           </div>
         </div>

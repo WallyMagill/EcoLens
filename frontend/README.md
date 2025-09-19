@@ -47,7 +47,7 @@ src/
 ## Backend Configuration
 
 The frontend is configured to connect to:
-- **API Base URL**: `http://44.203.253.29:3001`
+- **API Base URL**: `http://EconLe-EconL-rZpK4Z8Snovx-624635801.us-east-1.elb.amazonaws.com`
 - **Endpoints**: `/health`, `/api/portfolios`, `/api/scenarios`
 - **CORS**: Already configured for frontend origins
 - **Timeout**: 10 seconds per request
@@ -140,8 +140,8 @@ The build output will be in the `dist/` directory, ready for deployment to any s
 ### Backend Connectivity
 
 If the API test fails:
-1. Verify backend is running on `http://44.203.253.29:3001`
-2. Check network connectivity
+1. Verify backend is running on `http://EconLe-EconL-rZpK4Z8Snovx-624635801.us-east-1.elb.amazonaws.com`
+2. Check network connectivity (note: self-signed certificate may show security warnings)
 3. Review browser console for detailed error messages
 
 ## Next Steps

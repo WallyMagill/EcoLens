@@ -3,6 +3,7 @@ import Button from '../components/ui/Button';
 import ErrorMessage from '../components/ui/ErrorMessage';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 import apiClient from '../services/api';
+import { API_BASE_URL } from '../utils/constants';
 // import type { HealthResponse, Portfolio, Scenario } from '../types/api';
 
 interface TestResult {
@@ -235,7 +236,7 @@ const ApiTest: React.FC = () => {
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <h3 className="text-sm font-medium text-blue-800 mb-2">Connection Details</h3>
         <div className="text-sm text-blue-700">
-          <p><strong>Backend URL:</strong> http://44.203.253.29:3001</p>
+          <p><strong>Backend URL:</strong> {API_BASE_URL}</p>
           <p><strong>Timeout:</strong> 10 seconds</p>
           <p><strong>CORS:</strong> Configured for frontend origins</p>
         </div>

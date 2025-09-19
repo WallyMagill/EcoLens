@@ -1,10 +1,17 @@
 import * as cdk from 'aws-cdk-lib';
+import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
+import * as elbv2_targets from 'aws-cdk-lib/aws-elasticloadbalancingv2-targets';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as rds from 'aws-cdk-lib/aws-rds';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import { Construct } from 'constructs';
+
+interface EconLensStackProps extends cdk.StackProps {
+  domainName?: string; // Optional domain name for SSL certificate
+}
 
 export class EconLensStack extends cdk.Stack {
   public readonly vpc: ec2.Vpc;
@@ -12,8 +19,10 @@ export class EconLensStack extends cdk.Stack {
   public readonly userPool: cognito.UserPool;
   public readonly assetsBucket: s3.Bucket;
   public readonly ec2Instance: ec2.Instance;
+  public readonly loadBalancer: elbv2.ApplicationLoadBalancer;
+  public readonly certificate?: acm.Certificate;
 
-  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+  constructor(scope: Construct, id: string, props?: EconLensStackProps) {
     super(scope, id, props);
 
     // Simple VPC with two public subnets (required for RDS)
@@ -121,6 +130,108 @@ export class EconLensStack extends cdk.Stack {
       'chown ec2-user:ec2-user /home/ec2-user/econlens'
     );
 
+    // Security group for Application Load Balancer
+    const albSecurityGroup = new ec2.SecurityGroup(this, 'ALBSecurityGroup', {
+      vpc: this.vpc,
+      description: 'Security group for Application Load Balancer',
+      allowAllOutbound: true,
+    });
+
+    // Allow HTTP and HTTPS traffic from internet to ALB
+    albSecurityGroup.addIngressRule(
+      ec2.Peer.anyIpv4(),
+      ec2.Port.tcp(80),
+      'Allow HTTP traffic to ALB'
+    );
+    albSecurityGroup.addIngressRule(
+      ec2.Peer.anyIpv4(),
+      ec2.Port.tcp(443),
+      'Allow HTTPS traffic to ALB'
+    );
+
+    // Update EC2 security group to only allow traffic from ALB
+    // Remove direct internet access to EC2 (more secure)
+    const albToEc2Rule = new ec2.SecurityGroup(this, 'ALBToEC2SecurityGroup', {
+      vpc: this.vpc,
+      description: 'Security group allowing ALB to communicate with EC2',
+    });
+
+    albToEc2Rule.addIngressRule(
+      albSecurityGroup,
+      ec2.Port.tcp(3001),
+      'Allow ALB to access EC2 API on port 3001'
+    );
+
+    // Add the new security group to the EC2 instance
+    this.ec2Instance.addSecurityGroup(albToEc2Rule);
+
+    // Create Application Load Balancer
+    this.loadBalancer = new elbv2.ApplicationLoadBalancer(this, 'EconLensALB', {
+      vpc: this.vpc,
+      internetFacing: true,
+      securityGroup: albSecurityGroup,
+      vpcSubnets: {
+        subnetType: ec2.SubnetType.PUBLIC,
+      },
+    });
+
+    // SSL Certificate (optional - only if domain name is provided)
+    if (props?.domainName) {
+      this.certificate = new acm.Certificate(this, 'EconLensSSLCert', {
+        domainName: props.domainName,
+        validation: acm.CertificateValidation.fromDns(), // DNS validation
+      });
+    }
+
+    // Target Group for EC2 backend
+    const targetGroup = new elbv2.ApplicationTargetGroup(this, 'EconLensTargetGroup', {
+      vpc: this.vpc,
+      port: 3001,
+      protocol: elbv2.ApplicationProtocol.HTTP,
+      targetType: elbv2.TargetType.INSTANCE,
+      healthCheck: {
+        enabled: true,
+        path: '/health',
+        protocol: elbv2.Protocol.HTTP,
+        port: '3001',
+        healthyHttpCodes: '200',
+        interval: cdk.Duration.seconds(30),
+        timeout: cdk.Duration.seconds(5),
+        healthyThresholdCount: 2,
+        unhealthyThresholdCount: 3,
+      },
+      targets: [new elbv2_targets.InstanceTarget(this.ec2Instance, 3001)],
+    });
+
+    // HTTP Listener
+    if (this.certificate) {
+      // If we have SSL certificate, redirect HTTP to HTTPS
+      this.loadBalancer.addListener('HTTPListener', {
+        port: 80,
+        protocol: elbv2.ApplicationProtocol.HTTP,
+        defaultAction: elbv2.ListenerAction.redirect({
+          protocol: 'HTTPS',
+          port: '443',
+          permanent: true,
+        }),
+      });
+
+      // HTTPS Listener
+      this.loadBalancer.addListener('HTTPSListener', {
+        port: 443,
+        protocol: elbv2.ApplicationProtocol.HTTPS,
+        certificates: [this.certificate],
+        defaultAction: elbv2.ListenerAction.forward([targetGroup]),
+      });
+    } else {
+      // If no SSL certificate, just use HTTP
+      this.loadBalancer.addListener('HTTPListener', {
+        port: 80,
+        protocol: elbv2.ApplicationProtocol.HTTP,
+        defaultAction: elbv2.ListenerAction.forward([targetGroup]),
+      });
+    }
+
     // RDS PostgreSQL database (db.t3.micro for free tier)
     this.database = new rds.DatabaseInstance(this, 'EconLensDatabase', {
       engine: rds.DatabaseInstanceEngine.postgres({
@@ -222,5 +333,22 @@ export class EconLensStack extends cdk.Stack {
       value: this.database.secret?.secretArn || 'No secret generated',
       description: 'RDS Database Secret ARN',
     });
+
+    new cdk.CfnOutput(this, 'LoadBalancerDNS', {
+      value: this.loadBalancer.loadBalancerDnsName,
+      description: 'Application Load Balancer DNS Name',
+    });
+
+    new cdk.CfnOutput(this, 'LoadBalancerArn', {
+      value: this.loadBalancer.loadBalancerArn,
+      description: 'Application Load Balancer ARN',
+    });
+
+    if (this.certificate) {
+      new cdk.CfnOutput(this, 'SSLCertificateArn', {
+        value: this.certificate.certificateArn,
+        description: 'SSL Certificate ARN (requires manual DNS validation)',
+      });
+    }
   }
 }

@@ -7,8 +7,8 @@ This guide covers the deployment of the EconLens React frontend with proper envi
 ### Production Environment (`.env.production`)
 ```bash
 # API Configuration
-REACT_APP_API_URL=http://44.203.253.29:3001/api
-REACT_APP_API_BASE_URL=http://44.203.253.29:3001
+REACT_APP_API_URL=https://44.203.253.29/api
+REACT_APP_API_BASE_URL=https://44.203.253.29
 
 # AWS Configuration
 REACT_APP_AWS_REGION=us-east-1
@@ -26,7 +26,7 @@ REACT_APP_ENABLE_ANALYTICS=true
 REACT_APP_ENABLE_ERROR_REPORTING=true
 
 # CORS Configuration
-REACT_APP_CORS_ORIGIN=http://44.203.253.29:3001
+REACT_APP_CORS_ORIGIN=https://44.203.253.29
 
 # Build Configuration
 GENERATE_SOURCEMAP=false
